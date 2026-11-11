@@ -2,7 +2,7 @@
 
 A free, open-source safety check for people who have connected Claude to their email, files and work tools. It runs on your own computer and writes a plain-language report:
 
-- **Your setup's operating style:** Hands-on, Guarded or Autonomous, read from your settings. You choose the level you want.
+- **Your setup's operating style:** Hands-on, Guided or Autopilot, read from your settings. You choose the level you want.
 - **Things to be aware of, decided once:** for each one, guard it with a rule, remove it, or say you are OK with it. Accepted items stay quiet unless they change. There is no grade.
 - **What Claude may do without asking:** your standing approvals and block rules, in plain words.
 - **Access map:** every connector, and what it lets Claude read, create, change, delete, send and spend.

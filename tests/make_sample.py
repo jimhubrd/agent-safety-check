@@ -11,7 +11,7 @@ tools = S.inventory()
 # Last week's snapshot: Notion did not yet have move or duplicate, and Gmail could not trash.
 prev_tools = [t for t in tools if not t["name"].endswith(("move_pages", "duplicate_page", "trash_message"))]
 prev_map = analyze.access_map(prev_tools, S.CONNECTORS, S.RULES)
-prev = analyze.snapshot(prev_map, S.RULES); prev["detected_level"] = "autonomous"
+prev = analyze.snapshot(prev_map, S.RULES); prev["detected_level"] = "autopilot"
 
 vrows = versions.check(S.CONNECTORS, offline=True)
 for r in vrows:   # illustrative values for the sample only

@@ -190,15 +190,15 @@ class Levels(unittest.TestCase):
         free = analyze.access_map(tools, {}, rules(allow=["mcp__mail"]))
         guarded = analyze.access_map(tools, {}, rules(allow=["mcp__mail"], hook_details=[{"matcher": "mcp__mail__send.*", "role": "send-guard"}]))
         asks = analyze.access_map(tools, {}, rules())
-        self.assertEqual(analyze.detect_level(free, [], rules()), "wide-open")
-        self.assertEqual(analyze.detect_level(free, [], rules(hook_details=[{"matcher": "Write|Edit", "role": "logger"}])), "wide-open")
-        self.assertEqual(analyze.detect_level(free, [], rules(hook_details=[{"matcher": "mcp__.*", "role": "logger"}])), "autonomous")
-        self.assertEqual(analyze.detect_level(guarded, []), "guarded")
+        self.assertEqual(analyze.detect_level(free, [], rules()), "full-send")
+        self.assertEqual(analyze.detect_level(free, [], rules(hook_details=[{"matcher": "Write|Edit", "role": "logger"}])), "full-send")
+        self.assertEqual(analyze.detect_level(free, [], rules(hook_details=[{"matcher": "mcp__.*", "role": "logger"}])), "autopilot")
+        self.assertEqual(analyze.detect_level(guarded, []), "guided")
         self.assertEqual(analyze.detect_level(asks, []), "hands-on")
 
-    def test_autonomous_quiets_sends_and_deletes(self):
+    def test_autopilot_quiets_sends_and_deletes(self):
         f = [{"id": "delete:x", "level": "aware", "state": "open"}, {"id": "secret:x:y", "level": "important", "state": "open"}]
-        out = analyze.apply_level(f, "autonomous")
+        out = analyze.apply_level(f, "autopilot")
         self.assertEqual(out[0]["level"], "info")
         self.assertEqual(out[1]["level"], "important")
 

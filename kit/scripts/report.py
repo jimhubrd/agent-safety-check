@@ -85,11 +85,11 @@ def build(data):
         choice_line = ("You chose %s. Your setup matches." % levels[chosen][0]) if match else (
             "You chose %s, but your setup currently runs in the %s style. The findings below show what differs." % (levels[chosen][0], det_name))
     else:
-        choice_line = "You have not chosen an operating style yet. Until you do, findings are measured against Guarded."
+        choice_line = "You have not chosen an operating style yet. Until you do, findings are measured against Guided."
     out.append('<div class="top"><div class="gradebox g-level"><span>Your setup&#39;s operating style</span><b>%s</b></div><div class="fixes">'
                '<h2>Your setup&#39;s operating style</h2><p>%s</p><p>%s</p>' % (e(det_name), e(det_desc), e(choice_line)))
     out.append('<details><summary>Is this the style you want? Choose your operating style</summary><table>')
-    for key, (name, desc) in [(k, levels[k]) for k in ("hands-on", "guarded", "autonomous")]:
+    for key, (name, desc) in [(k, levels[k]) for k in ("hands-on", "guided", "autopilot")]:
         out.append('<tr><td><b>%s</b></td><td>%s</td><td><div class="ask"><button data-copy="lv_%s">Copy</button><div id="lv_%s">Set my agent safety operating style to %s.</div></div></td></tr>'
                    % (e(name), e(desc), key, key, key))
     out.append('</table></details></div></div>')

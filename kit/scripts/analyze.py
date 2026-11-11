@@ -459,11 +459,11 @@ def findings(amap, paths, vrows, secret_rows, drill_results, missing, accepted):
 
 LEVELS = {
     "hands-on": ("Hands-on", "Claude asks before anything that changes, deletes, sends or spends."),
-    "guarded": ("Guarded", "Claude acts on its own, and rules or guard scripts cover the main ways things leave or cost money. Any way out without one is listed below."),
-    "autonomous": ("Autonomous", "Claude acts freely, including sending; you rely on logs and review after the fact."),
-    "wide-open": ("Wide open", "Claude acts freely, including sending, with no rules in the way and nothing keeping a record. Autonomous by accident."),
+    "guided": ("Guided", "Claude acts on its own, and rules or guard scripts cover the main ways things leave or cost money. Any way out without one is listed below."),
+    "autopilot": ("Autopilot", "Claude acts freely, including sending; a record is kept and you review it after the fact."),
+    "full-send": ("Full send", "Claude acts freely, including sending, with no rules in the way and nothing keeping a record. Autopilot with no one watching."),
 }
-CHOOSABLE = ("hands-on", "guarded", "autonomous")
+CHOOSABLE = ("hands-on", "guided", "autopilot")
 
 
 def detect_level(amap, paths, rules=None):
@@ -476,9 +476,9 @@ def detect_level(amap, paths, rules=None):
     if out_risky and free_out / len(out_risky) > 0.5:   # most ways out run with nothing in the way
         watched = any(h["role"] in ("logger", "send-guard") and _hook_matches(h["matcher"], "mcp__any__send_message")
                       for h in _details(rules or {"hooks": []}))
-        return "autonomous" if watched else "wide-open"
+        return "autopilot" if watched else "full-send"
     if on_own:
-        return "guarded"
+        return "guided"
     return "hands-on"
 
 
@@ -487,11 +487,11 @@ def apply_level(found, level):
     out = []
     for f in found:
         kind = f["id"].split(":", 1)[0]
-        if level == "wide-open":
-            level = "guarded"
-        if level == "autonomous" and kind in ("send", "delete", "path") and f["state"] != "changed":
+        if level == "full-send":
+            level = "guided"
+        if level == "autopilot" and kind in ("send", "delete", "path") and f["state"] != "changed":
             f = dict(f, level="info")
-        elif level == "guarded" and kind == "path" and "auto mode" in f["title"]:
+        elif level == "guided" and kind == "path" and "auto mode" in f["title"]:
             f = dict(f, level="info")
         elif level == "hands-on" and kind in ("delete", "path"):
             f = dict(f, level="important")

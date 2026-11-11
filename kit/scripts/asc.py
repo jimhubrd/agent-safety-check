@@ -6,7 +6,7 @@
     python3 asc.py run --inventory FILE [--drills DIR] [--offline]
     python3 asc.py accept FINDING_ID            record that you are OK with a finding
     python3 asc.py unaccept FINDING_ID          bring a finding back
-    python3 asc.py level hands-on|guarded|autonomous   record the operating style you want
+    python3 asc.py level hands-on|guided|autopilot   record the operating style you want
     python3 asc.py open                         print the path of the newest report
     python3 asc.py uninstall [--confirm] [--remove-reports]
 
@@ -112,7 +112,7 @@ def analyse(tools, connector_cfg, rules, vrows, secret_rows, drill_results, prev
     detected = analyze.detect_level(amap, paths, rules)
     chosen = choices.get("level")
     found = analyze.findings(amap, paths, vrows, secret_rows, drill_results, missing, choices.get("accepted"))
-    found = analyze.apply_level(found, chosen or "guarded")
+    found = analyze.apply_level(found, chosen or "guided")
     snap = analyze.snapshot(amap, rules)
     snap["detected_level"] = detected
     data = {

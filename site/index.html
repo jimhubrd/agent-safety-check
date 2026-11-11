@@ -121,7 +121,7 @@ The only official copy is at github.com/jimhubrd/agent-safety-check. Warn me if 
 
   <h3>What the report shows</h3>
   <div class="shows">
-    <div><b>Your setup's operating style</b><span>Hands-on, Guarded or Autonomous, read from your actual settings. You choose which one you want.</span></div>
+    <div><b>Your setup's operating style</b><span>Hands-on, Guided or Autopilot, read from your actual settings. You choose which one you want.</span></div>
     <div><b>Things to be aware of, decided once</b><span>For each one: guard it with a rule, remove it, or say you are OK with it. Accepted items stay quiet unless they change.</span></div>
     <div><b>What Claude may do without asking</b><span>Every standing approval, in plain words, including the ones you clicked late at night.</span></div>
     <div><b>Access map</b><span>Every connector: what it can read, create, change, delete, send and spend.</span></div>
@@ -163,7 +163,7 @@ function score(){
   const tri=['data','untrusted','send'].every(bad);
   const n=Q.filter(q=>bad(q[0])).length;
   let cls,head,body;
-  const level=bad('send')?'Autonomous':(bad('delete')||bad('schedule')||bad('spend'))?'Guarded':'Hands-on';
+  const level=bad('send')?'Autopilot':(bad('delete')||bad('schedule')||bad('spend'))?'Guided':'Hands-on';
   if(unsure>=5){cls='grey';head='You can\'t tell from memory, and that is normal';body='Most people don\'t know these answers. That is exactly what the full report is for: it reads what is actually installed.';}
   else if(tri){cls='amber';head='Sounds like: '+level+', with all three abilities that matter most';body='Your agent reads private data, reads content strangers wrote, and can send things out without your click. That can be a fine way to work, as long as it is a choice you made, with rules on the way out.';}
   else{cls=n>=3?'amber':'green';head='Sounds like: '+level;body=n?'A few things worth being aware of. None of them is wrong; each one is a choice to make on purpose.':'Run the full report to confirm it against what is actually installed.';}
