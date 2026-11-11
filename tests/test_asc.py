@@ -7,6 +7,8 @@ sys.path.insert(0, str(ROOT / "tests" / "fixtures"))
 import classify, analyze, versions, report, asc, config   # noqa
 import sample_setup as S  # noqa
 
+FAKE_KEY = "sk-" + "ant-" + "REALLYSECRETVALUE1234567890"   # fake, built at run time
+
 
 def rules(**kw):
     base = {"allow": [], "ask": [], "deny": [], "mode": "default", "hooks": [], "hook_details": []}
@@ -57,7 +59,7 @@ class NoLeaks(unittest.TestCase):
             home = Path(d)
             (home / ".claude").mkdir()
             (home / ".claude" / "settings.json").write_text(json.dumps({"permissions": {"allow": [
-                'Bash(curl -H "Authorization: Bearer sk-ant-REALLYSECRETVALUE123456" https://x)']}}))
+                'Bash(curl -H "Authorization: Bearer ' + FAKE_KEY + '" https://x)']}}))
             with mock.patch.object(config, "HOME", home):
                 r = config.settings(cwd=d)
         self.assertNotIn("REALLYSECRET", json.dumps(r))
@@ -65,7 +67,7 @@ class NoLeaks(unittest.TestCase):
     def test_secret_values_never_returned(self):
         with tempfile.TemporaryDirectory() as d:
             (Path(d) / ".mcp.json").write_text(json.dumps({"mcpServers": {
-                "a": {"command": "npx", "args": ["x@1.0.0"], "env": {"API_KEY": "sk-ant-REALLYSECRETVALUE1234567890"}},
+                "a": {"command": "npx", "args": ["x@1.0.0"], "env": {"API_KEY": FAKE_KEY}},
                 "b": {"type": "http", "url": "https://x.example", "headers": {"Authorization": "Bearer abcdefghijklmnop1234"}},
                 "c": {"command": "npx", "args": ["y@1.0.0", "--api-key", "plainvalue12345678"]},
                 "d": {"type": "http", "url": "https://bob:hunter2pass@api.example.com/mcp"}}}))
