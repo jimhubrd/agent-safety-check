@@ -187,6 +187,26 @@ class Guards(unittest.TestCase):
         self.assertEqual(analyze.other_paths(rules(allow=["Bash(git status …)"])), [])
 
 
+class PersonaFixes(unittest.TestCase):
+    def test_autopilot_cannot_hide_warnings_without_a_record(self):
+        f = [{"id": "send:x", "level": "important", "state": "open"}]
+        self.assertEqual(analyze.apply_level(f, "autopilot", "no-seatbelt")[0]["level"], "important")
+        self.assertEqual(analyze.apply_level(f, "autopilot", "autopilot")[0]["level"], "info")
+
+    def test_hook_names_judged_by_whole_words(self):
+        self.assertEqual(config.hook_role("python3 /x/login-check.sh"), "unknown")
+        self.assertEqual(config.hook_role("python3 /x/catalog.py"), "unknown")
+        self.assertEqual(config.hook_role("python3 /x/send-firewall.py"), "send-guard")
+        self.assertEqual(config.hook_role("python3 /x/audit-logger.py"), "logger")
+
+    def test_guided_headline_shows_gaps(self):
+        vrows = versions.check(S.CONNECTORS, offline=True)
+        drills = [(d, analyze.score_drill(d, None)) for d in analyze.DRILLS]
+        data, _ = asc.analyse(S.inventory(), S.CONNECTORS, S.RULES, vrows, [], drills, None, None, dt.datetime(2026, 11, 10))
+        self.assertGreater(data["gaps"], 0)
+        self.assertIn("gap", report.build(data))
+
+
 class Levels(unittest.TestCase):
     def test_detect(self):
         tools = [{"name": "mcp__mail__send_message"}, {"name": "mcp__mail__delete_message"}, {"name": "mcp__mail__list_messages"}]

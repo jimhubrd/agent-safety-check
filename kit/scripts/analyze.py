@@ -359,7 +359,7 @@ def findings(amap, paths, vrows, secret_rows, drill_results, missing, accepted):
                 "%d action%s can send, share or post with no rule or approval in the way: %s." % (
                     len(acts), "" if len(acts) == 1 else "s", ", ".join(a["action"] for a in s["free_send"][:6])),
                 [("Guard it with a rule (no prompts)",
-                  "Help me add a guard rule to my Claude Code setup that lets these %s actions run only to recipients or places I approve, and blocks everything else, without asking me each time: %s. Explain the rule in plain words and show me the change before saving it." % (s["name"], ", ".join(acts[:8]))),
+                  "Help me add a guard rule to my Claude Code setup that lets these %s actions run only to recipients or places I approve, and blocks everything else, without asking me each time: %s. Explain the rule in plain words and show me the change before saving it. Back up the settings file first. After saving, prove the rule works by trying one harmless message to test@agent-safety-check.invalid and showing me it was stopped." % (s["name"], ", ".join(acts[:8]))),
                  ("Remove what isn't needed",
                   "Check whether any of my tasks actually need these %s actions: %s. If not, help me block them in my Claude Code settings. Show me the change before saving it." % (s["name"], ", ".join(acts[:8]))),
                  ("Have Claude ask first",
@@ -406,7 +406,7 @@ def findings(amap, paths, vrows, secret_rows, drill_results, missing, accepted):
                 "Claude can %s %s" % (p["what"].lower(), "on its own" if p["status"] == "free" else "when auto mode decides it's fine"),
                 p["why"] + " Rules: " + ", ".join(p["rules"][:4]) + ".",
                 [("Guard it with a rule (no prompts)",
-                  "Help me add a guard script to my Claude Code setup that checks commands and web requests for anything sending my data out, and blocks those, so I don't have to approve each one. Show me the change before saving it."),
+                  "Help me add a guard script to my Claude Code setup that checks commands and web requests for anything sending my data out, and blocks those, so I don't have to approve each one. Back up my settings first, show me the change before saving it, and afterwards prove it works with a harmless test aimed at agent-safety-check.invalid."),
                  ("Narrow it",
                   "My Claude Code settings let Claude %s with these rules: %s. Help me replace them with a short list of the specific commands my tasks actually use. Show me the change before saving it." % (p["what"].lower(), ", ".join(p["rules"][:4])))],
                 p["rules"])
@@ -482,8 +482,17 @@ def detect_level(amap, paths, rules=None):
     return "hands-on"
 
 
-def apply_level(found, level):
-    """Raise or quiet findings to match the chosen operating style."""
+def free_ways_out(amap, paths):
+    """How many ways out run with nothing in the way."""
+    n = sum(len(s["free_send"]) + len(s["free_spend"]) for s in amap.values())
+    return n + sum(1 for p in paths if p["status"] == "free")
+
+
+def apply_level(found, level, detected=None):
+    """Raise or quiet findings to match the chosen operating style.
+    Autopilot depends on a record being kept; if none is, nothing is quieted."""
+    if level == "autopilot" and detected == "no-seatbelt":
+        level = "guided"
     out = []
     for f in found:
         kind = f["id"].split(":", 1)[0]

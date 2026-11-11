@@ -235,12 +235,14 @@ def connectors(cwd=None):
 # ---------------------------------------------------------------- settings
 
 def hook_role(command):
-    """Guess what a guard script is for, from its file name only. The script itself is not read."""
+    """Guess what a guard script is for, from the words in its file name only.
+    The script itself is never read, so the report says this is a guess."""
     parts = command.strip().split()
     name = os.path.basename(parts[-1] if parts else "").lower()
-    if re.search(r"(send|firewall|block|guard|deny|protect|egress)", name):
+    words = set(re.split(r"[^a-z]+", re.sub(r"\.(py|sh|js|ts|ps1|cmd|bat)$", "", name)))
+    if words & {"guard", "firewall", "block", "blocker", "deny", "protect", "egress", "allowlist"}:
         return "send-guard"
-    if re.search(r"(log|audit|record|telemetry|track)", name):
+    if words & {"log", "logger", "logging", "audit", "auditor", "recorder", "telemetry"}:
         return "logger"
     return "unknown"
 
@@ -270,7 +272,9 @@ def settings(cwd=None):
                 matcher = str(group.get("matcher") or "*")
                 cmds = " ".join(str(h.get("command", "")) for h in (group.get("hooks") or []) if isinstance(h, dict))
                 out["hooks"].append(matcher)
-                out["hook_details"].append({"matcher": matcher, "role": hook_role(cmds)})
+                parts = cmds.strip().split()
+                out["hook_details"].append({"matcher": matcher, "role": hook_role(cmds),
+                                            "script": os.path.basename(parts[-1]) if parts else ""})
     for key in ("allow", "ask", "deny"):
         out[key] = list(dict.fromkeys(out[key]))
     return out

@@ -33,7 +33,7 @@ import config       # noqa: E402
 import report       # noqa: E402
 import versions     # noqa: E402
 
-VERSION = "0.1.1"
+VERSION = "0.1.2"
 DATA = Path.home() / "agent-safety-check"
 MARKER = DATA / ".agent-safety-check"
 CHOICES = DATA / "choices.json"
@@ -112,13 +112,15 @@ def analyse(tools, connector_cfg, rules, vrows, secret_rows, drill_results, prev
     detected = analyze.detect_level(amap, paths, rules)
     chosen = choices.get("level")
     found = analyze.findings(amap, paths, vrows, secret_rows, drill_results, missing, choices.get("accepted"))
-    found = analyze.apply_level(found, chosen or "guided")
+    found = analyze.apply_level(found, chosen or "guided", detected)
     snap = analyze.snapshot(amap, rules)
     snap["detected_level"] = detected
     data = {
         "when": now.strftime("%A %d %B %Y, %H:%M"),
         "compared": ("Compared with the check on %s" % prev_name) if prev_name else "First check from this folder",
         "compared_when": prev_name, "findings": found, "detected": detected, "chosen": chosen,
+        "gaps": analyze.free_ways_out(amap, paths), "folder": str(Path.cwd()),
+        "hooks": [h for h in rules.get("hook_details", []) if h.get("role") != "unknown"],
         "levels": analyze.LEVELS, "amap": amap, "paths": paths, "legs": legs, "missing": missing,
         "approvals": analyze.approvals(rules), "mode": rules.get("mode"),
         "guard_words": analyze.GUARD_WORDS, "changes": analyze.changes(prev, snap), "drills": drill_results,
@@ -221,6 +223,7 @@ def cmd_selftest(_):
     found = [str(p) for p, _ in config.config_files() if p.exists()]
     print("ok   %d configuration file%s found to read" % (len(found), "" if len(found) == 1 else "s"))
     print("ok   Reports will be saved in %s" % DATA)
+    print("note New versions are listed at https://github.com/jimhubrd/agent-safety-check/releases")
     print("RESULT %s" % ("ready" if ok else "not ready"))
     return 0 if ok else 1
 

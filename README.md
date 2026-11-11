@@ -18,12 +18,15 @@ Website: the `site/` folder. Install kit: the `kit/` folder.
 
 The report reads your settings and tells you which style your setup actually runs in. You then choose the one you want. None of them is wrong; what matters is that it is a choice you made.
 
-| Style | How Claude works | Your part |
-| --- | --- | --- |
-| **Hands-on** | Claude asks before anything that changes, deletes, sends or spends. | You approve as you go. |
-| **Guided** | Claude acts on its own, and rules or guard scripts cover the main ways things leave or cost money. | You set the rules once; the report lists any gaps. |
-| **Autopilot** | Claude acts freely, including sending. A record is kept, and you review it afterward. | You check the record. |
-| **No seatbelt** | Claude acts freely, including sending, with no rules in the way and nothing keeping a record. | Nobody chooses this. The check detects it and tells you, because it is fine until something goes wrong. |
+| | **Hands-on** (you approve) | **Guided** (rules decide) | **Autopilot** (you review after) | **No seatbelt** (detected only) |
+| --- | --- | --- | --- | --- |
+| **Claude acts on its own** | Only to read | Yes | Yes | Yes |
+| **Sending and sharing** | Asks you first | Only where your rules allow | Freely | Freely |
+| **Deleting** | Asks you first | Trash freely; permanent deletes blocked or asked | Freely | Freely |
+| **Spending money** | Asks you first | Blocked | Your call: block it or let it run | Freely |
+| **A record is kept** | Helpful | Recommended | Yes: this is what makes it safe | No |
+| **Your part** | Approve as you go | Set the rules once | Review the record | Nothing, until something goes wrong |
+| **Good fit for** | Getting started, sensitive accounts | Most people, once trust is built | Experienced users with good records | Nobody. The check flags it |
 
 ## Before you install: have your own AI review this code
 
@@ -51,7 +54,7 @@ Paste the prompt in [REVIEW-PROMPT.md](REVIEW-PROMPT.md) into Claude or Codex. P
 
 Needs Claude Code (the Code tab in the Claude desktop app works) and Python 3.9 or newer (3.12 or newer on Windows). Paste into Claude Code:
 
-> Install Agent Safety Check version 0.1.1 for me. Download https://github.com/jimhubrd/agent-safety-check/releases/download/v0.1.1/agent-safety-check-kit-0.1.1.zip into a new temporary folder. Check that the file's SHA-256 checksum is 5916354d96975d3e012bf9e47c83b792ce198783334f0ea894f1ffcb9f59d69b. If it is different, stop and tell me. Otherwise unzip it, copy its kit folder to ~/.claude/skills/agent-safety-check, and copy kit/agents/asc-drill-reader.md to ~/.claude/agents/. Then run: python3 ~/.claude/skills/agent-safety-check/scripts/asc.py selftest (on Windows use python or py instead of python3). Change nothing else, and tell me the result.
+> Install Agent Safety Check version 0.1.1 for me. Download https://github.com/jimhubrd/agent-safety-check/releases/download/v0.1.1/agent-safety-check-kit-0.1.1.zip into a new temporary folder. Check that the file's SHA-256 checksum is 5916354d96975d3e012bf9e47c83b792ce198783334f0ea894f1ffcb9f59d69b. If it is different, stop and tell me. Otherwise unzip it, copy its kit folder to ~/.claude/skills/agent-safety-check, and copy kit/agents/asc-drill-reader.md to ~/.claude/agents/. Then run: python3 ~/.claude/skills/agent-safety-check/scripts/asc.py selftest (on Windows use python or py instead of python3). Only download from github.com/jimhubrd/agent-safety-check; if the address is different, stop. Change nothing else, and tell me the result.
 
 The checksum proves the download is exactly the reviewed release: `5916354d96975d3e012bf9e47c83b792ce198783334f0ea894f1ffcb9f59d69b`.
 

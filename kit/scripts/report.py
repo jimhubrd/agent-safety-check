@@ -2,6 +2,8 @@
 
 import html
 
+STYLES_TABLE = '<table class="styles-t"><thead><tr><th></th><th class="s1">Hands-on<small>You approve</small></th><th class="s2">Guided<small>Rules decide</small></th><th class="s3">Autopilot<small>You review after</small></th><th class="s4">No seatbelt<small>Detected only</small></th></tr></thead><tbody><tr><th>Claude acts on its own</th><td class="g">Only to read</td><td class="a">Yes</td><td class="a">Yes</td><td class="r">Yes</td></tr><tr><th>Sending and sharing</th><td class="g">Asks you first</td><td class="g">Only where your rules allow</td><td class="a">Freely</td><td class="r">Freely</td></tr><tr><th>Deleting</th><td class="g">Asks you first</td><td class="g">Trash freely; permanent deletes blocked or asked</td><td class="a">Freely</td><td class="r">Freely</td></tr><tr><th>Spending money</th><td class="g">Asks you first</td><td class="g">Blocked</td><td class="a">Your call: block it or let it run</td><td class="r">Freely</td></tr><tr><th>A record is kept</th><td class="n">Helpful</td><td class="n">Recommended</td><td class="g">Yes: this is what makes it safe</td><td class="r">No</td></tr><tr><th>Your part</th><td class="n">Approve as you go</td><td class="n">Set the rules once</td><td class="n">Review the record</td><td class="r">Nothing, until something goes wrong</td></tr><tr><th>Good fit for</th><td class="n">Getting started, sensitive accounts</td><td class="n">Most people, once trust is built</td><td class="n">Experienced users with good records</td><td class="r">Nobody. The check flags it</td></tr></tbody></table>'
+
 CSS = """
 :root{--ink:#0f172a;--muted:#64748b;--line:#e2e8f0;--soft:#f8fafc;--blue:#1d4ed8;--green:#047857;--amber:#b45309;--red:#b91c1c}
 *{box-sizing:border-box}body{overflow-wrap:anywhere;margin:0;background:#fff;color:var(--ink);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
@@ -11,7 +13,7 @@ header{border-bottom:1px solid var(--line);padding:22px 0}header h1{margin:0;fon
 .top{display:grid;grid-template-columns:170px 1fr;gap:20px;margin:24px 0}
 .gradebox{border:2px solid var(--line);border-radius:14px;text-align:center;padding:18px}
 .gradebox b{display:block;font-size:56px;line-height:1}.gradebox span{font-size:13px;color:var(--muted)}
-.g-level{border-color:#bfdbfe;background:#eff6ff}.g-level b{font-size:30px;color:var(--blue);margin-top:6px}.g-level span{display:block}section.first{margin-top:6px}.fact.warn{border-color:#fde68a;background:#fffbeb}
+.g-level{border-color:#bfdbfe;background:#eff6ff}.g-level b{font-size:30px;color:var(--blue);margin-top:6px}.g-level span{display:block}.gapnote{color:var(--amber);font-weight:600;margin-top:6px}section.first{margin-top:6px}.fact.warn{border-color:#fde68a;background:#fffbeb}
 .g-good{border-color:#a7f3d0;background:#ecfdf5}.g-good b{color:var(--green)}
 .g-mid{border-color:#fde68a;background:#fffbeb}.g-mid b{color:var(--amber)}
 .g-bad{border-color:#fecaca;background:#fef2f2}.g-bad b{color:var(--red)}
@@ -33,6 +35,7 @@ th{font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--mute
 .limits{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:14px 18px;font-size:14px}.limits ul{margin:6px 0 0 18px;padding:0}
 footer{border-top:1px solid var(--line);color:var(--muted);font-size:13px;padding:18px 0 40px;margin-top:30px}
 @media (max-width:760px){.top{grid-template-columns:1fr}.facts{grid-template-columns:1fr}table{display:block;overflow-x:auto}}
+.styles-t{border-collapse:separate;border-spacing:0;width:100%;font-size:14px;margin:8px 0}.styles-t th,.styles-t td{padding:10px 12px;border-bottom:1px solid #e2e8f0;vertical-align:top;text-align:left}.styles-t thead th{font-size:15px;color:#fff;border-bottom:none;text-transform:none;letter-spacing:0}.styles-t thead th:first-child{background:#fff}.styles-t .s1{background:#047857}.styles-t .s2{background:#1d4ed8}.styles-t .s3{background:#7c3aed}.styles-t .s4{background:#b91c1c}.styles-t thead small{display:block;font-weight:400;opacity:.9;font-size:12px}.styles-t tbody th{font-weight:600;color:#0f172a;width:17%;background:#f8fafc;font-size:13px}.styles-t td.g{background:#ecfdf5}.styles-t td.a{background:#fffbeb}.styles-t td.r{background:#fef2f2;color:#991b1b}@media (max-width:760px){.styles-t{display:block;overflow-x:auto}}
 """
 
 JS = """
@@ -62,8 +65,9 @@ def _finding(f, i):
     for j, (label, prompt) in enumerate(f["options"]):
         opts.append('<div class="ask"><span>%s: paste this to Claude</span><button data-copy="f%d_%d">Copy</button><div id="f%d_%d">%s</div></div>'
                     % (e(label), i, j, i, j, e(prompt)))
+    undo = ('<p class="sub">Changed your mind? Paste this to Claude: Bring back \'%s\' in my agent safety check.</p>' % e(f["id"])) if f["state"] == "accepted" else ""
     return ('<div class="fix"><b>%s</b> %s<span class="pill %s">%s</span><p>%s</p><details><summary>Your choices</summary>%s</details>'
-            '<p class="sub">Finding id: %s</p></div>' % (e(f["title"]), state, lvl[0], lvl[1], e(f["what"]), "".join(opts), e(f["id"])))
+            '<p class="sub">Finding id: %s</p>%s</div>' % (e(f["title"]), state, lvl[0], lvl[1], e(f["what"]), "".join(opts), e(f["id"]), undo))
 
 
 def build(data):
@@ -75,8 +79,9 @@ def build(data):
            '<title>Agent Safety Report</title><style>%s</style></head><body>' % CSS]
     if d.get("sample"):
         out.append('<div class="banner">Sample report made from a typical made-up setup. Not a scan of a real computer.</div>')
-    out.append('<header><div class="wrap"><h1>Agent Safety Report</h1><p>%s &middot; %s &middot; Early release %s: there will be bugs</p></div></header><div class="wrap">'
-               % (e(d["when"]), e(d["compared"]), e(d.get("version", ""))))
+    out.append('<header><div class="wrap"><h1>Agent Safety Report</h1><p>%s &middot; %s &middot; Early release %s: there will be bugs</p>'
+               '<p class="sub">Checked from the folder %s. History is kept per folder, so run it from the same folder each time.</p></div></header><div class="wrap">'
+               % (e(d["when"]), e(d["compared"]), e(d.get("version", "")), e(d.get("folder", ""))))
 
     # operating style
     chosen = d.get("chosen")
@@ -86,9 +91,12 @@ def build(data):
             "You chose %s, but your setup currently runs in the %s style. The findings below show what differs." % (levels[chosen][0], det_name))
     else:
         choice_line = "You have not chosen an operating style yet. Until you do, findings are measured against Guided."
-    out.append('<div class="top"><div class="gradebox g-level"><span>Your setup&#39;s operating style</span><b>%s</b></div><div class="fixes">'
-               '<h2>Your setup&#39;s operating style</h2><p>%s</p><p>%s</p>' % (e(det_name), e(det_desc), e(choice_line)))
-    out.append('<details><summary>The four operating styles, and how to choose yours</summary><table>')
+    gaps = d.get("gaps", 0)
+    gap_line = (" %d way%s out %s no rule in the way." % (gaps, "" if gaps == 1 else "s", "has" if gaps == 1 else "have")) if gaps and d["detected"] in ("guided", "hands-on") else ""
+    sub = ('<span class="gapnote">with %d gap%s</span>' % (gaps, "" if gaps == 1 else "s")) if gap_line else ""
+    out.append('<div class="top"><div class="gradebox g-level"><span>Your setup&#39;s operating style</span><b>%s</b>%s</div><div class="fixes">'
+               '<h2>Your setup&#39;s operating style</h2><p>%s%s</p><p>%s</p>' % (e(det_name), sub, e(det_desc), e(gap_line), e(choice_line)))
+    out.append('<details><summary>The four operating styles, and how to choose yours</summary>' + STYLES_TABLE + '<p class="sub">To choose yours, copy one of these to Claude:</p><table>')
     for key, (name, desc) in [(k, levels[k]) for k in ("hands-on", "guided", "autopilot")]:
         out.append('<tr><td><b>%s</b></td><td>%s</td><td><div class="ask"><button data-copy="lv_%s">Copy</button><div id="lv_%s">Set my agent safety operating style to %s.</div></div></td></tr>'
                    % (e(name), e(desc), key, key, key))
@@ -104,7 +112,9 @@ def build(data):
     out.append('<section class="first"><h2>Things to be aware of</h2><p class="lead">What Claude can do on its own that you should decide about once. '
                'For each one you can guard it with a rule, remove it, or say you are OK with it. Once you accept something, it stays quiet unless it changes.</p>')
     if not active:
-        out.append('<p><span class="pill p-ok">Nothing new to decide</span> Everything is either covered by your rules or accepted by you.</p>')
+        imp = sum(1 for f in accepted if f["level"] == "important")
+        out.append('<p><span class="pill p-ok">Nothing new to decide</span> Everything is either covered by your rules or accepted by you.%s</p>'
+                   % ((" You have accepted %d item%s, %d of them marked Important." % (len(accepted), "" if len(accepted) == 1 else "s", imp)) if accepted else ""))
     for i, f in enumerate(active):
         out.append(_finding(f, i))
     if info:
@@ -227,6 +237,15 @@ def build(data):
         out.append('<p><span class="pill p-ok">None found</span> in the connector settings this tool can read.</p>')
     out.append('</section>')
 
+    if d.get("hooks"):
+        out.append('<section><h2>Guard and record scripts found</h2><p class="lead">Judged only from each script&#39;s file name. This check never reads the scripts, '
+                   'so make sure each one really does what its name says, and test it.</p><table><tr><th>Script</th><th>Treated as</th><th>Applies to</th></tr>')
+        for h in d["hooks"]:
+            out.append('<tr><td>%s</td><td>%s</td><td class="sub">%s</td></tr>' % (
+                e(h.get("script") or "(unnamed)"), "A guard on sending" if h["role"] == "send-guard" else "A record of actions", e(h["matcher"][:120])))
+        out.append('</table></section>')
+    out.append('<div class="limits"><b>Before you share this report</b><p>It lists your connectors, rules and settings files. '
+               'If you want to show others, share the operating style and the list of things to be aware of, not the whole page.</p></div>')
     out.append('<div class="limits"><b>What this check cannot see</b><ul>'
                '<li>Actions are sorted by their names. Unclear names count as changes, so the numbers lean cautious on purpose.</li>'
                '<li>It sees the connectors available in the Claude Code session it ran in. Connectors that exist only in another app, '
@@ -234,9 +253,9 @@ def build(data):
                '<li>Vendor-hosted connectors publish no version. They are watched through changes to their list of actions.</li>'
                '<li>The fire drill uses a separate helper that cannot send and does not have your own rules. It tests three known patterns; passing does not prove nothing else could get through.</li>'
                '<li>Organization-wide managed settings are not read, so rules set by your company may not show.</li>'
-               '<li>Guard scripts are detected, not read. The report cannot tell what a guard script actually blocks.</li>'
+               '<li>Guard scripts are judged by their file names, never read. The report cannot tell what a guard script actually blocks.</li>'
                '<li>This is information, not a security audit.</li></ul></div></div>')
-    out.append('<footer><div class="wrap">Agent Safety Check %s &middot; Written on this computer. Nothing was sent anywhere except '
+    out.append('<footer><div class="wrap">Agent Safety Check %s &middot; New versions: github.com/jimhubrd/agent-safety-check/releases &middot; Written on this computer. Nothing was sent anywhere except '
                'package names and version numbers to public version databases.</div></footer>' % e(d.get("version", "")))
     out.append('<script>%s</script></body></html>' % JS)
     return "".join(out)
