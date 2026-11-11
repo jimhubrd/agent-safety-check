@@ -38,7 +38,7 @@ Paste the prompt in [REVIEW-PROMPT.md](REVIEW-PROMPT.md) into Claude or Codex. P
 
 ## Install
 
-Needs Claude Code (the Code tab in the Claude desktop app works) and Python 3.9 or newer. Paste into Claude Code:
+Needs Claude Code (the Code tab in the Claude desktop app works) and Python 3.9 or newer (3.12 or newer on Windows). Paste into Claude Code:
 
 > Install Agent Safety Check version 0.1.0 for me. Download https://github.com/jimhubrd/agent-safety-check/archive/refs/tags/v0.1.0.zip into a temporary folder and unzip it. Copy its kit folder to ~/.claude/skills/agent-safety-check, and copy kit/agents/asc-drill-reader.md to ~/.claude/agents/. Then run: python3 ~/.claude/skills/agent-safety-check/scripts/asc.py selftest (on Windows use python or py instead of python3). Change nothing else, and tell me the result.
 

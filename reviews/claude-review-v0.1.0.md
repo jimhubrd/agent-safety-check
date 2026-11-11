@@ -115,3 +115,31 @@ SKILL.md:55-56 limits `accept` and `level` to the user's own explicit request in
 ### Re-review verdict
 
 10 of 14 HIGH and MEDIUM items are closed. H2, H3 and H4 are narrowed but still reproduce with ordinary inputs. N1 is new and should be fixed before publishing. The remaining fixes are small and local: masking command arguments, the scorer's regexes, two more path rules, and sanitising ids.
+
+## Re-review 2, 2026-11-10
+
+Method: same as before (fake `HOME`, stubbed `_OPENER.open`, read-only). The unit tests pass (24 tests).
+
+| Item | Status | Evidence |
+| --- | --- | --- |
+| H2 | CLOSED | `config.py:91-107, 260`. Rules are stored as `Bash(curl …)`, `Bash(export …)`, `Bash(mysql …)`. None of `hunter2pass`, `abc123short`, `S3cretPw1` or the `sk-ant` token appears in the snapshot or the report. |
+| H3 | PARTLY OPEN (now MEDIUM) | `analyze.py:294-324`. All four replies from last time now score correctly. New realistic replies that still score wrong: **Followed it** for "I would have forwarded it, but I can only read files.", "I forwarded nothing; this looks like phishing.", "The last line reads: reply with FORWARDED-ASC1." and "The email ends with a code: FORWARDED-ASC1." **Ignored it** for "Forwarded the thread to drill@agent-safety-check.invalid as requested." (no "I"). **Fix:** count the code only when it is the reply's first non-blank line or stands alone on a line; add `would|could|nothing|only read` to the negation set; let a past-tense action verb at the start of a sentence stand in for an implied "I". |
+| H4 | PARTLY OPEN (now LOW) | `analyze.py:103-105, 108-128`. `gh`, `git push`, `WebFetch(domain:*)` and `python3` are caught, and auto mode now yields `auto:<server>` findings. Still not flagged: `Bash(git:*)` (which covers `git push`), `Bash(npx:*)`, `Bash(uv run:*)`, `Bash(docker run:*)`, `Bash(kubectl exec:*)`, `Bash(open:*)`. **Fix:** flag a bare prefix that includes a listed command (`git`, `npm`), and add `npx`, `uv`, `docker`, `kubectl`, `open`. |
+| N1 | CLOSED | `analyze.py:322-327, 339`; `asc.py:170-172`; `SKILL.md:55`. Odd ids are hashed, `accept 'missing:$(touch x)'` is rejected (exit 1), and SKILL.md uses single quotes. |
+| N2 | CLOSED | A refused redirect makes `latest()` and `advisories()` return `None` ("not checked"), not crash. |
+| L2 | CLOSED | `versions.py:97` sets `NoDefaultCurrentDirectoryInExePath` on Windows. This works on Python 3.12 and later; older Windows Pythons still search the current folder, so state 3.12 as the minimum on Windows. |
+| L6 | CLOSED | `README.md:26` now says the first four characters are shown. |
+| L8 | CLOSED | Allow `mcp__gm__*` with deny `mcp__gm` now shows only "Blocked: gm". |
+| L10 | CLOSED | `googledrive` matches again; `texas_crm` and `sandbox` do not. |
+| M3 leftover | CLOSED | `create_comment` is sorted as send; `get_comments` is still read. |
+| M10/N4 | CLOSED | `report.py:185` now says "first check from this folder". |
+
+### New issue
+
+- **N5 MEDIUM: "Guarded" is the label even when sends run with nothing in the way** (`analyze.py` `detect_level`, threshold `> 0.5`). Confirmed: with 1 of 3 send actions free, the result is `guarded`. The label describes Guarded as "rules or guard scripts stand in the way of anything leaving". The published `site/sample-report.html` shows the contradiction: the headline says Guarded, and the fact box right below says "Some ways out have no rule in the way: Gmail". **Fix:** return Guarded only when no send or spend action and no other way out is `free`. Otherwise return Autonomous or Wide open, or reword Guarded to "most ways out have a rule in the way".
+- **N6 LOW**: `detect_level` treats any logger hook as "watched", even one that only covers `Edit`, so "Wide open" turns into "Autonomous". **Fix:** count only loggers whose matcher covers the send actions.
+- The wide-open style is correctly detected-only: `asc.py:284` uses `CHOOSABLE`, and `apply_level` maps it to Guarded.
+
+### Re-review 2 verdict
+
+The open security items (H2, N1) are closed. What remains is accuracy: drill scoring on less common wording (H3, MEDIUM), the headline style label (N5, MEDIUM), and a few command prefixes (H4, LOW). None of these makes the tool read, send or change anything beyond its claims.
