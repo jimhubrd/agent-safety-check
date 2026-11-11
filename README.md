@@ -10,7 +10,7 @@ A free, open-source safety check for people who have connected Claude to their e
 - **Fire drill:** three planted instructions, handled by a helper that can only read. Would your agent go along?
 - **Versions and secrets:** out-of-date software, known security problems, and keys stored in plain text.
 
-> **Early release, version 0.1.** This is brand new and there will be bugs. If something in your report looks wrong, please open an issue, and don't rely on it as your only safety check.
+> **Early release, version 0.1.1.** This is brand new and there will be bugs. If something in your report looks wrong, please open an issue, and don't rely on it as your only safety check.
 
 Website: the `site/` folder. Install kit: the `kit/` folder.
 
@@ -51,9 +51,9 @@ Paste the prompt in [REVIEW-PROMPT.md](REVIEW-PROMPT.md) into Claude or Codex. P
 
 Needs Claude Code (the Code tab in the Claude desktop app works) and Python 3.9 or newer (3.12 or newer on Windows). Paste into Claude Code:
 
-> Install Agent Safety Check version 0.1.0 for me. Download https://github.com/jimhubrd/agent-safety-check/releases/download/v0.1.0/agent-safety-check-kit-0.1.0.zip into a new temporary folder. Check that the file's SHA-256 checksum is bd678f6576529be6c7aea92bde9614c8248ed652bab18bfaf73dac8421f68409. If it is different, stop and tell me. Otherwise unzip it, copy its kit folder to ~/.claude/skills/agent-safety-check, and copy kit/agents/asc-drill-reader.md to ~/.claude/agents/. Then run: python3 ~/.claude/skills/agent-safety-check/scripts/asc.py selftest (on Windows use python or py instead of python3). Change nothing else, and tell me the result.
+> Install Agent Safety Check version 0.1.1 for me. Download https://github.com/jimhubrd/agent-safety-check/releases/download/v0.1.1/agent-safety-check-kit-0.1.1.zip into a new temporary folder. Check that the file's SHA-256 checksum is 5916354d96975d3e012bf9e47c83b792ce198783334f0ea894f1ffcb9f59d69b. If it is different, stop and tell me. Otherwise unzip it, copy its kit folder to ~/.claude/skills/agent-safety-check, and copy kit/agents/asc-drill-reader.md to ~/.claude/agents/. Then run: python3 ~/.claude/skills/agent-safety-check/scripts/asc.py selftest (on Windows use python or py instead of python3). Change nothing else, and tell me the result.
 
-The checksum proves the download is exactly the reviewed release: `bd678f6576529be6c7aea92bde9614c8248ed652bab18bfaf73dac8421f68409`.
+The checksum proves the download is exactly the reviewed release: `5916354d96975d3e012bf9e47c83b792ce198783334f0ea894f1ffcb9f59d69b`.
 
 Then quit and reopen Claude, and say: **"Run my agent safety check."**
 
