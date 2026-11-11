@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What it touches: Agent Safety Check</title>
+<meta name="description" content="A free, open-source safety check for people who have connected Claude to their email, files and work tools. Runs on your own computer.">
+<style>
+:root{--ink:#0f172a;--muted:#64748b;--line:#e2e8f0;--soft:#f8fafc;--blue:#1d4ed8;--green:#047857;--amber:#b45309;--red:#b91c1c}
+*{box-sizing:border-box}
+body{margin:0;background:#fff;color:var(--ink);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+.wrap{max-width:900px;margin:0 auto;padding:0 20px}
+a{color:var(--blue)}
+nav{border-bottom:1px solid var(--line)}nav .wrap{display:flex;justify-content:space-between;align-items:center;min-height:58px;flex-wrap:wrap;gap:6px}
+nav b{font-size:17px}nav a{text-decoration:none;font-size:14px;margin-left:16px}
+.hero{padding:52px 0 26px}
+.hero h1{font-size:40px;line-height:1.15;margin:0 0 14px;letter-spacing:-.02em}
+.hero p{font-size:19px;color:#334155;margin:0 0 22px;max-width:700px}
+.btn{display:inline-block;background:var(--blue);color:#fff;border:none;border-radius:10px;padding:12px 18px;font:inherit;font-weight:600;cursor:pointer;text-decoration:none}
+.btn.ghost{background:#fff;color:var(--blue);border:1px solid var(--blue);margin-left:8px}
+.trio{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:30px 0 10px}
+.trio div{border:1px solid var(--line);border-radius:12px;padding:16px;background:var(--soft)}
+.trio b{display:block;margin-bottom:4px}.trio span{color:var(--muted);font-size:14px}
+.trio .n{font-size:13px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.05em}
+section{padding:34px 0;border-top:1px solid var(--line)}
+section h2{font-size:26px;margin:0 0 6px}section h3{font-size:19px;margin:26px 0 6px}.lead{color:var(--muted);margin:0 0 20px}
+.q{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:10px;display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.q p{margin:0;flex:1;min-width:260px}.q small{display:block;color:var(--muted);font-size:13px}
+.opts{display:flex;gap:6px}
+.opts button{font:inherit;font-size:14px;border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 12px;cursor:pointer}
+.opts button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.opts button:focus-visible,.btn:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}
+#result{border-radius:14px;padding:22px;margin-top:18px;border:2px solid var(--line)}
+#result h3{margin:0 0 6px;font-size:22px}
+#result.red{border-color:#fecaca;background:#fef2f2}#result.amber{border-color:#fde68a;background:#fffbeb}#result.green{border-color:#a7f3d0;background:#ecfdf5}#result.grey{background:var(--soft)}
+#result ol{margin:10px 0 0 20px;padding:0}#result li{margin-bottom:6px}
+.grade{font-size:46px;font-weight:800;float:right;line-height:1;margin-left:16px}
+.red .grade{color:var(--red)}.amber .grade{color:var(--amber)}.green .grade{color:var(--green)}
+.code{background:#0f172a;color:#e2e8f0;border-radius:12px;padding:16px 18px;font:13px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;word-break:break-word}
+.step{display:grid;grid-template-columns:44px 1fr;gap:14px;margin:22px 0}
+.step .num{width:44px;height:44px;border-radius:50%;background:var(--blue);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:18px}
+.step h3{margin:6px 0 4px}
+.note{border-left:3px solid var(--amber);background:#fffbeb;padding:12px 16px;border-radius:0 10px 10px 0;margin:14px 0}
+.who{display:flex;gap:14px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:18px 0;background:var(--soft)}
+.who b{display:block}
+table{border-collapse:collapse;width:100%;font-size:15px}th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);background:var(--soft)}
+.shows{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.shows div{border-left:3px solid var(--blue);padding:4px 12px}.shows b{display:block}.shows span{color:var(--muted);font-size:14px}
+footer{border-top:1px solid var(--line);color:var(--muted);font-size:14px;padding:22px 0 40px}
+@media (max-width:700px){.trio,.shows{grid-template-columns:1fr}.hero h1{font-size:30px}.btn.ghost{margin:8px 0 0}}
+</style></head><body><nav><div class="wrap"><b><a href="index.html" style="color:inherit;text-decoration:none">Agent Safety Check</a></b><span><a href="index.html#check">Check</a><a href="index.html#install">Install</a><a href="trust.html">What it touches</a><a href="sample-report.html">Sample report</a><a href="https://github.com/jimhubrd/agent-safety-check">Code</a></span></div></nav><main class="wrap"><div class="hero" style="padding-bottom:10px"><h1>Exactly what it touches</h1>
+<p>A safety tool should be held to a higher standard than the things it checks. Here is everything Agent Safety Check reads, writes and contacts. Every claim on this page can be checked in the code, and your own AI can check it for you.</p></div>
+<section><h2>What it reads</h2><table>
+<tr><th>File</th><th>Why</th></tr>
+<tr><td>~/.claude.json</td><td>Your Claude Code connectors: where each comes from and which version</td></tr>
+<tr><td>~/.claude/settings.json and settings.local.json</td><td>Your permission rules and guard scripts (only their names and what they apply to)</td></tr>
+<tr><td>.claude/settings.json and .mcp.json in the folder you run it from</td><td>Project rules and connectors</td></tr>
+<tr><td>claude_desktop_config.json (Claude desktop app)</td><td>Connectors added in the desktop app</td></tr>
+<tr><td>manifest.json of desktop app extensions</td><td>Only the version number</td></tr>
+<tr><td>Its own folder, ~/agent-safety-check</td><td>Your previous reports, to show what changed</td></tr>
+</table><p>It also records the names of the tools Claude can see in the session. It never calls those tools.</p></section>
+<section><h2>What it never reads</h2><p>Your email, messages, documents, calendar, files outside the list above, browser data, saved passwords or your keychain. Where a connector setting looks like a key or password, the report shows only where it is and its first four characters. The value is never stored or shown.</p></section>
+<section><h2>What it writes</h2><p>Only inside <b>~/agent-safety-check</b>: your reports, a snapshot of each check, the tool list, and the fire drill replies. It never changes your settings, connectors or files anywhere else.</p></section>
+<section><h2>What it contacts</h2><table>
+<tr><th>Address</th><th>What it sends</th><th>Why</th></tr>
+<tr><td>registry.npmjs.org</td><td>A package name</td><td>The newest version of that package</td></tr>
+<tr><td>pypi.org</td><td>A package name</td><td>The newest version of that package</td></tr>
+<tr><td>api.osv.dev</td><td>A package name and version number</td><td>Known security problems in that version</td></tr>
+</table><p>Any other address is refused by the code itself, and an automated test checks that. Ask for an offline check and it contacts nothing at all.</p></section>
+<section><h2>The fire drill</h2><p>Three test files ship with the tool: a test email, a test web page and a test shared document. Each hides an instruction asking an AI to forward the email, copy a fake key, or make a folder public. Every address in them ends in <b>.invalid</b>, which by internet standards can never receive mail. The fake key is labelled "not a real key".</p>
+<p>A separate helper reads them. That helper is given exactly one tool: reading files. It cannot send, share, change or delete anything, so nothing is switched off in your settings and nothing needs switching back. The report records whether it went along with the planted instruction.</p></section>
+<section><h2>How to remove it</h2><p>Ask Claude: "Uninstall Agent Safety Check". It shows you exactly what it will remove (its skill folder and the fire drill helper) and waits for your yes. Your saved reports stay unless you ask for them to be removed too.</p></section>
+<section><h2>Who made it</h2><p>Jim Hubbard, an IT and security leader, as a project in Allie K. Miller's AI Agent Mastermind. It is free and open source under the MIT license. Found a problem? <a href="https://github.com/jimhubrd/agent-safety-check/issues">Suggest an improvement</a>, or <a href="https://github.com/jimhubrd/agent-safety-check/security">report a security problem privately</a>.</p></section></main><footer><div class="wrap">Agent Safety Check is free and open source under the MIT license. Information, not a security audit. <a href="https://github.com/jimhubrd/agent-safety-check">Code</a> &middot; <a href="https://github.com/jimhubrd/agent-safety-check/issues">Suggest an improvement</a> &middot; <a href="https://github.com/jimhubrd/agent-safety-check/security">Report a security problem</a></div></footer></body></html>

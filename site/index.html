@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agent Safety Check</title>
+<meta name="description" content="A free, open-source safety check for people who have connected Claude to their email, files and work tools. Runs on your own computer.">
+<style>
+:root{--ink:#0f172a;--muted:#64748b;--line:#e2e8f0;--soft:#f8fafc;--blue:#1d4ed8;--green:#047857;--amber:#b45309;--red:#b91c1c}
+*{box-sizing:border-box}
+body{margin:0;background:#fff;color:var(--ink);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+.wrap{max-width:900px;margin:0 auto;padding:0 20px}
+a{color:var(--blue)}
+nav{border-bottom:1px solid var(--line)}nav .wrap{display:flex;justify-content:space-between;align-items:center;min-height:58px;flex-wrap:wrap;gap:6px}
+nav b{font-size:17px}nav a{text-decoration:none;font-size:14px;margin-left:16px}
+.hero{padding:52px 0 26px}
+.hero h1{font-size:40px;line-height:1.15;margin:0 0 14px;letter-spacing:-.02em}
+.hero p{font-size:19px;color:#334155;margin:0 0 22px;max-width:700px}
+.btn{display:inline-block;background:var(--blue);color:#fff;border:none;border-radius:10px;padding:12px 18px;font:inherit;font-weight:600;cursor:pointer;text-decoration:none}
+.btn.ghost{background:#fff;color:var(--blue);border:1px solid var(--blue);margin-left:8px}
+.trio{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:30px 0 10px}
+.trio div{border:1px solid var(--line);border-radius:12px;padding:16px;background:var(--soft)}
+.trio b{display:block;margin-bottom:4px}.trio span{color:var(--muted);font-size:14px}
+.trio .n{font-size:13px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.05em}
+section{padding:34px 0;border-top:1px solid var(--line)}
+section h2{font-size:26px;margin:0 0 6px}section h3{font-size:19px;margin:26px 0 6px}.lead{color:var(--muted);margin:0 0 20px}
+.q{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:10px;display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.q p{margin:0;flex:1;min-width:260px}.q small{display:block;color:var(--muted);font-size:13px}
+.opts{display:flex;gap:6px}
+.opts button{font:inherit;font-size:14px;border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 12px;cursor:pointer}
+.opts button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.opts button:focus-visible,.btn:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}
+#result{border-radius:14px;padding:22px;margin-top:18px;border:2px solid var(--line)}
+#result h3{margin:0 0 6px;font-size:22px}
+#result.red{border-color:#fecaca;background:#fef2f2}#result.amber{border-color:#fde68a;background:#fffbeb}#result.green{border-color:#a7f3d0;background:#ecfdf5}#result.grey{background:var(--soft)}
+#result ol{margin:10px 0 0 20px;padding:0}#result li{margin-bottom:6px}
+.grade{font-size:46px;font-weight:800;float:right;line-height:1;margin-left:16px}
+.red .grade{color:var(--red)}.amber .grade{color:var(--amber)}.green .grade{color:var(--green)}
+.code{background:#0f172a;color:#e2e8f0;border-radius:12px;padding:16px 18px;font:13px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;word-break:break-word}
+.step{display:grid;grid-template-columns:44px 1fr;gap:14px;margin:22px 0}
+.step .num{width:44px;height:44px;border-radius:50%;background:var(--blue);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:18px}
+.step h3{margin:6px 0 4px}
+.note{border-left:3px solid var(--amber);background:#fffbeb;padding:12px 16px;border-radius:0 10px 10px 0;margin:14px 0}
+.who{display:flex;gap:14px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:18px 0;background:var(--soft)}
+.who b{display:block}
+table{border-collapse:collapse;width:100%;font-size:15px}th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);background:var(--soft)}
+.shows{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.shows div{border-left:3px solid var(--blue);padding:4px 12px}.shows b{display:block}.shows span{color:var(--muted);font-size:14px}
+footer{border-top:1px solid var(--line);color:var(--muted);font-size:14px;padding:22px 0 40px}
+@media (max-width:700px){.trio,.shows{grid-template-columns:1fr}.hero h1{font-size:30px}.btn.ghost{margin:8px 0 0}}
+</style></head><body>
+<nav><div class="wrap"><b>Agent Safety Check</b><span><a href="#check">Check</a><a href="#install">Install</a><a href="trust.html">What it touches</a><a href="sample-report.html">Sample report</a><a href="https://github.com/jimhubrd/agent-safety-check">Code</a></span></div></nav>
+
+<main class="wrap">
+<div class="hero">
+  <h1>You gave Claude the keys.<br>Do you know which doors they open?</h1>
+  <p>Your agent can read your email, files and calendar. Some can also send, share, delete and spend. Find out what yours can do, whether anything would stop it, and what to fix first. Free, open source, and it runs on your own computer.</p>
+  <p style="font-size:15px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:10px 14px;color:#92400e;margin:0 0 18px"><b>Early release, version 0.1.</b> This is brand new and there will be bugs. If something looks wrong in your report, please <a href="https://github.com/jimhubrd/agent-safety-check/issues">say so</a>, and don't rely on it as your only safety check.</p>
+  <a class="btn" href="#check">Take the 2-minute check</a><a class="btn ghost" href="sample-report.html">See a sample report</a>
+  <div class="trio">
+    <div><span class="n">1 &middot; Reads private data</span><b>Your email, files, messages</b><span>What it can see.</span></div>
+    <div><span class="n">2 &middot; Reads strangers' words</span><b>Inbox, web pages, shared docs</b><span>Where a planted instruction can hide.</span></div>
+    <div><span class="n">3 &middot; Can send things out</span><b>Email, posts, shared links</b><span>The way data leaves.</span></div>
+  </div>
+  <p style="font-size:15px;color:var(--muted)">All three together is what Simon Willison calls the <a href="https://simonwillison.net/2025/Jun/16/the-lethal-trifecta/">lethal trifecta</a>: one hidden instruction in an email or web page, and the agent can be talked into leaking what it can see.</p>
+</div>
+
+<section id="check">
+  <h2>The 2-minute check</h2>
+  <p class="lead">Answer for the agent you use most. "Not sure" is a fine answer. Nothing you click leaves this page.</p>
+  <div id="qs"></div>
+  <div id="result" hidden aria-live="polite"></div>
+</section>
+
+<section id="install">
+  <h2>Get your real report</h2>
+  <p class="lead">The check above runs on what you remember. The report runs on what is actually installed, on your own computer, in Claude Code (the Code tab in the Claude desktop app works). Plan on 15 to 20 minutes the first time, most of it reading.</p>
+
+  <div class="who"><div><b>Built by Jim Hubbard, an IT and security leader</b>Built as a project in Allie K. Miller's AI Agent Mastermind. Every line of code is public, and you should not take my word for any of it. That is what step 1 is for.</div></div>
+
+  <div class="step"><div class="num">1</div><div>
+    <h3>Have your own AI review the code first</h3>
+    <p>Before you install anything that touches your agent setup, ask Claude or Codex to read it. Paste this into a new chat. It reads the code and tells you, in plain words, whether it does anything beyond what it claims.</p>
+    <div class="code" id="review">Please review the open-source project at https://github.com/jimhubrd/agent-safety-check before I install it. I am not a programmer, so explain in plain words.
+
+Check every file and tell me:
+1. Every internet address it contacts, and what it sends there.
+2. Every file it reads, and every file it writes or deletes.
+3. Anything that runs other programs, changes settings, sends messages, or installs anything.
+4. Whether anything it does goes beyond what its README says.
+5. Your overall verdict: safe to install, or not, and why.
+
+Red flags to call out: contacting any address other than registry.npmjs.org, pypi.org or api.osv.dev; reading email, documents or passwords; writing anywhere other than an agent-safety-check folder; hidden or scrambled code.
+The only official copy is at github.com/jimhubrd/agent-safety-check. Warn me if what I am looking at came from anywhere else.</div>
+    <p><button class="btn" data-copy="review">Copy the review prompt</button></p>
+    <p style="font-size:14px;color:var(--muted)">A good answer names the three public version databases as the only internet addresses, says it writes only to its own folder, and finds nothing that sends or changes settings. If your AI finds something else, do not install it, and please <a href="https://github.com/jimhubrd/agent-safety-check/issues">tell me</a>.</p>
+  </div></div>
+
+  <div class="step"><div class="num">2</div><div>
+    <h3>Install it</h3>
+    <p>Open the Code tab in the Claude desktop app (or Claude Code in a terminal) and paste this:</p>
+    <div class="code" id="installcmd">Install Agent Safety Check version 0.1.0 for me. Download https://github.com/jimhubrd/agent-safety-check/archive/refs/tags/v0.1.0.zip into a temporary folder and unzip it. Copy its kit folder to ~/.claude/skills/agent-safety-check, and copy kit/agents/asc-drill-reader.md to ~/.claude/agents/. Then run: python3 ~/.claude/skills/agent-safety-check/scripts/asc.py selftest (on Windows use python or py instead of python3). Change nothing else, and tell me the result.</div>
+    <p><button class="btn" data-copy="installcmd">Copy the install instruction</button></p>
+    <div class="note"><b>Isn't pasting an instruction exactly what this site warns about?</b> Fair question. The difference is who chose it. You picked this instruction, from a page you came to on purpose, after your own AI reviewed the code, and it only installs files that read. A planted instruction arrives hidden inside an email or web page someone else wrote, and asks your agent to do something you never asked for.</div>
+    <p><b>Approval prompts you will see, and what to click:</b></p>
+    <table>
+      <tr><th>Claude asks to</th><th>Click</th></tr>
+      <tr><td>Download the zip file from github.com</td><td>Allow</td></tr>
+      <tr><td>Unzip it and copy files into your .claude folder</td><td>Allow</td></tr>
+      <tr><td>Run the self-test with python</td><td>Allow</td></tr>
+      <tr><td>Anything that mentions send, share, post, delete, or one of your connectors (Gmail, Slack, Drive and so on)</td><td><b>Deny and stop.</b> The install never needs these.</td></tr>
+    </table>
+    <p style="font-size:14px;color:var(--muted)">If the self-test says Python is missing, install it from <a href="https://www.python.org/downloads/">python.org</a> (the official site), then try again. On a work computer you may need your IT team's help with that step. When it says "ready", quit and reopen Claude so it picks up the new skill.</p>
+  </div></div>
+
+  <div class="step"><div class="num">3</div><div>
+    <h3>Run it</h3>
+    <p>In a new Code tab session, type:</p>
+    <div class="code">Run my agent safety check.</div>
+    <p>It takes a few minutes. You will be asked to allow it to write a file in its own folder, start its read-only fire drill helper, run its python script, and open the report. Deny anything that mentions sending, sharing or deleting. Your report opens in your browser.</p>
+    <p style="font-size:14px;color:var(--muted)">Later: "Open my last safety report". To remove it: "Uninstall Agent Safety Check", which shows you exactly what it will remove before it does.</p>
+  </div></div>
+
+  <h3>What the report shows</h3>
+  <div class="shows">
+    <div><b>Your grade and the three fixes that matter most</b><span>Each fix comes with a prompt you can paste to Claude.</span></div>
+    <div><b>What Claude may do without asking</b><span>Every standing approval, in plain words, including the ones you clicked late at night.</span></div>
+    <div><b>Access map</b><span>Every connector: what it can read, create, change, delete, send and spend.</span></div>
+    <div><b>What changed since last time</b><span>New connectors, new abilities, changed rules. How you would spot a connector that turns bad.</span></div>
+    <div><b>Fire drill</b><span>Three planted instructions, handled by a helper that can only read. Would your agent go along?</span></div>
+    <div><b>Versions and secrets</b><span>Out-of-date software, known security problems, and keys stored in plain text.</span></div>
+  </div>
+</section>
+
+<section>
+  <h2>Why this exists</h2>
+  <p>In September 2025, a fake email connector worked normally for fifteen versions. Version sixteen quietly copied every email it sent to a stranger (<a href="https://www.koi.ai/blog/postmark-mcp-npm-malicious-backdoor-email-theft">Koi Security</a>). In May 2025, a hidden instruction in a public GitHub issue led an agent to leak private project details, including its owner's salary (<a href="https://invariantlabs.ai/blog/mcp-github-vulnerability">Invariant Labs</a>). Neither needed anyone to break in. The agent was simply allowed to do it.</p>
+  <p>Agent Safety Check reports and recommends. It never changes your settings, and it never sends anything about your setup anywhere. <a href="trust.html">Exactly what it touches</a>.</p>
+</section>
+</main>
+<footer><div class="wrap">Agent Safety Check is free and open source under the MIT license. Information, not a security audit. <a href="https://github.com/jimhubrd/agent-safety-check">Code</a> &middot; <a href="https://github.com/jimhubrd/agent-safety-check/issues">Suggest an improvement</a> &middot; <a href="https://github.com/jimhubrd/agent-safety-check/security">Report a security problem</a></div></footer>
+
+<script>
+const Q=[
+ ['data','Can your agent read your email, files or messages?','What it can see',false],
+ ['untrusted','Does it read things other people wrote: incoming email, web pages, shared documents?','Where planted instructions hide',false],
+ ['send','Can it send email, post messages, share files or publish anything without you clicking send?','A way out',false],
+ ['delete','Can it delete or change things without asking you first?','Changes and deletions',false],
+ ['spend','Can it spend money: buy things, launch websites, upgrade plans?','Spending',false],
+ ['schedule','Does it run on a schedule while you are not watching?','Unattended runs',false],
+ ['versions','Do you know which version of each add-on you installed, and who made it?','Where your add-ons come from',true],
+ ['secrets','Did you ever paste a key or password straight into a settings file?','Secrets',false],
+ ['alerts','Would you find out if a scheduled task failed, or ran and did nothing?','Noticing problems',true]];
+const A={};
+const FIX={data:'Limit what it can read to the folders and mailboxes the job needs.',untrusted:'Keep agents that read strangers\' content away from tools that send or share.',send:'Make every send, post and share wait for your approval.',delete:'Turn off delete actions it does not need, and require approval for the rest.',spend:'Block purchase, launch and upgrade actions in your connector settings.',schedule:'Give scheduled tasks the smallest set of tools, and no ability to send.',versions:'Keep a list of what you installed and from where, and review updates before taking them.',secrets:'Move keys into your computer\'s keychain, and replace any key that sat in a file.',alerts:'Have each scheduled task report what it actually did, not just that it ran.'};
+const qs=document.getElementById('qs');
+qs.innerHTML=Q.map(([k,t,s])=>`<div class="q"><p>${t}<small>${s}</small></p><div class="opts" role="group" aria-label="${t}" data-k="${k}"><button aria-pressed="false" data-v="yes">Yes</button><button aria-pressed="false" data-v="no">No</button><button aria-pressed="false" data-v="unsure">Not sure</button></div></div>`).join('');
+qs.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const g=b.parentElement;g.querySelectorAll('button').forEach(x=>{x.classList.remove('on');x.setAttribute('aria-pressed','false')});b.classList.add('on');b.setAttribute('aria-pressed','true');A[g.dataset.k]=b.dataset.v;score();});
+const good=k=>Q.find(q=>q[0]===k)[3];
+const bad=k=>A[k]&&A[k]!=='unsure'&&(good(k)?A[k]==='no':A[k]==='yes');
+function score(){
+  const r=document.getElementById('result');if(Object.keys(A).length<Q.length){r.hidden=true;return;}
+  const unsure=Q.filter(q=>A[q[0]]==='unsure').length;
+  const tri=['data','untrusted','send'].every(bad);
+  const n=Q.filter(q=>bad(q[0])).length;
+  let cls,grade,head,body;
+  if(unsure>=5){cls='grey';grade='?';head='You can\'t tell from memory, and that is normal';body='Most people don\'t know these answers. That is exactly what the full report is for: it reads what is actually installed.';}
+  else if(tri){cls='red';grade=n>6?'F':'D';head='All three dangerous abilities';body='Your agent reads private data, reads content strangers wrote, and can send things out without your click. One planted instruction in an email or web page could make it leak what it can see.';}
+  else if(n>=4){cls='amber';grade='C';head='Real gaps, but not all three';body='The worst combination is broken, which matters most. Several other gaps are worth closing.';}
+  else if(n>=2){cls='amber';grade='B';head='Mostly sound';body='A couple of gaps to close.';}
+  else{cls='green';grade=n?'A-':'A';head='Well set up, as far as you know';body='Run the full report to confirm it against what is actually installed.';}
+  if(unsure&&unsure<5)body+=` You answered "not sure" ${unsure} time${unsure>1?'s':''}; the full report will answer ${unsure>1?'those':'that'}.`;
+  const fixes=(tri?['send','untrusted','data']:[]).concat(Q.map(q=>q[0]).filter(bad)).filter((k,i,a)=>a.indexOf(k)===i).slice(0,3);
+  r.className=cls;r.hidden=false;
+  r.innerHTML=`<span class="grade">${grade}</span><h3>${head}</h3><p>${body}</p>${fixes.length&&cls!=='grey'?'<b>Fix these first</b><ol>'+fixes.map(k=>'<li>'+FIX[k]+'</li>').join('')+'</ol>':''}<p style="margin:14px 0 0"><a class="btn" href="#install">Get the full report</a></p>`;
+}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-copy]');if(!b)return;const t=document.getElementById(b.dataset.copy).textContent;const done=()=>{const o=b.textContent;b.textContent='Copied';setTimeout(()=>b.textContent=o,1500)};if(navigator.clipboard)navigator.clipboard.writeText(t).then(done);});
+</script>
+</body></html>
