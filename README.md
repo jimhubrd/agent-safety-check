@@ -14,6 +14,17 @@ A free, open-source safety check for people who have connected Claude to their e
 
 Website: the `site/` folder. Install kit: the `kit/` folder.
 
+## Four operating styles
+
+The report reads your settings and tells you which style your setup actually runs in. You then choose the one you want. None of them is wrong; what matters is that it is a choice you made.
+
+| Style | How Claude works | Your part |
+| --- | --- | --- |
+| **Hands-on** | Claude asks before anything that changes, deletes, sends or spends. | You approve as you go. |
+| **Guided** | Claude acts on its own, and rules or guard scripts cover the main ways things leave or cost money. | You set the rules once; the report lists any gaps. |
+| **Autopilot** | Claude acts freely, including sending. A record is kept, and you review it afterward. | You check the record. |
+| **No seatbelt** | Claude acts freely, including sending, with no rules in the way and nothing keeping a record. | Nobody chooses this. The check detects it and tells you, because it is fine until something goes wrong. |
+
 ## Before you install: have your own AI review this code
 
 Paste the prompt in [REVIEW-PROMPT.md](REVIEW-PROMPT.md) into Claude or Codex. Please do this. A safety tool should earn your trust, not ask for it.

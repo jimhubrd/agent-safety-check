@@ -33,7 +33,7 @@ import config       # noqa: E402
 import report       # noqa: E402
 import versions     # noqa: E402
 
-VERSION = "0.1.0"
+VERSION = "0.1.1"
 DATA = Path.home() / "agent-safety-check"
 MARKER = DATA / ".agent-safety-check"
 CHOICES = DATA / "choices.json"

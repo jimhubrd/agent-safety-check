@@ -88,10 +88,12 @@ def build(data):
         choice_line = "You have not chosen an operating style yet. Until you do, findings are measured against Guided."
     out.append('<div class="top"><div class="gradebox g-level"><span>Your setup&#39;s operating style</span><b>%s</b></div><div class="fixes">'
                '<h2>Your setup&#39;s operating style</h2><p>%s</p><p>%s</p>' % (e(det_name), e(det_desc), e(choice_line)))
-    out.append('<details><summary>Is this the style you want? Choose your operating style</summary><table>')
+    out.append('<details><summary>The four operating styles, and how to choose yours</summary><table>')
     for key, (name, desc) in [(k, levels[k]) for k in ("hands-on", "guided", "autopilot")]:
         out.append('<tr><td><b>%s</b></td><td>%s</td><td><div class="ask"><button data-copy="lv_%s">Copy</button><div id="lv_%s">Set my agent safety operating style to %s.</div></div></td></tr>'
                    % (e(name), e(desc), key, key, key))
+    out.append('<tr><td><b>%s</b></td><td>%s</td><td class="sub">Detected only. Nobody chooses it; the check tells you when your setup runs this way.</td></tr>'
+               % (e(levels["no-seatbelt"][0]), e(levels["no-seatbelt"][1])))
     out.append('</table></details></div></div>')
 
     # findings

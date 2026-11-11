@@ -47,7 +47,7 @@ th{font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--mute
 footer{border-top:1px solid var(--line);color:var(--muted);font-size:14px;padding:22px 0 40px}
 @media (max-width:700px){nav .wrap{flex-direction:column;align-items:flex-start;padding:10px 16px}nav span{display:flex;flex-wrap:wrap;gap:4px 14px}nav a{margin-left:0}.wrap{padding:0 16px}table{display:block;overflow-x:auto}.trio,.shows{grid-template-columns:1fr}.hero h1{font-size:30px}.btn.ghost{margin:8px 0 0}}
 </style></head><body>
-<nav><div class="wrap"><b>Agent Safety Check</b><span><a href="#check">Check</a><a href="#install">Install</a><a href="trust.html">What it touches</a><a href="sample-report.html">Sample report</a><a href="https://github.com/jimhubrd/agent-safety-check">Code</a></span></div></nav>
+<nav><div class="wrap"><b>Agent Safety Check</b><span><a href="#check">Check</a><a href="#styles">Styles</a><a href="#install">Install</a><a href="trust.html">What it touches</a><a href="sample-report.html">Sample report</a><a href="https://github.com/jimhubrd/agent-safety-check">Code</a></span></div></nav>
 
 <main class="wrap">
 <div class="hero">
@@ -68,6 +68,12 @@ footer{border-top:1px solid var(--line);color:var(--muted);font-size:14px;paddin
   <p class="lead">Answer for the agent you use most. "Not sure" is a fine answer. Nothing you click leaves this page.</p>
   <div id="qs"></div>
   <div id="result" hidden aria-live="polite"></div>
+</section>
+
+<section id="styles">
+  <h2>Four operating styles</h2>
+  <p class="lead">The report reads your settings and tells you which style your setup actually runs in. Then you choose the style you want: Hands-on, Guided or Autopilot. None of them is wrong; what matters is that it is a choice you made.</p>
+  <table><tr><th>Style</th><th>How Claude works</th><th>Your part</th></tr><tr><td><b>Hands-on</b></td><td>Claude asks before anything that changes, deletes, sends or spends.</td><td>You approve as you go.</td></tr><tr><td><b>Guided</b></td><td>Claude acts on its own, and rules or guard scripts cover the main ways things leave or cost money.</td><td>You set the rules once; the report lists any gaps.</td></tr><tr><td><b>Autopilot</b></td><td>Claude acts freely, including sending. A record is kept, and you review it afterward.</td><td>You check the record.</td></tr><tr><td><b>No seatbelt</b></td><td>Claude acts freely, including sending, with no rules in the way and nothing keeping a record.</td><td>Nobody chooses this. The check detects it and tells you, because it is fine until something goes wrong.</td></tr></table>
 </section>
 
 <section id="install">
