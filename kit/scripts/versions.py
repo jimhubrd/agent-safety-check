@@ -12,7 +12,9 @@ setup, your files or your accounts is sent.
 """
 
 import json
+import os
 import platform
+import re
 import shutil
 import subprocess
 import urllib.parse
@@ -22,40 +24,53 @@ ALLOWED_HOSTS = {"registry.npmjs.org", "pypi.org", "api.osv.dev"}
 TIMEOUT = 8
 
 
+class _CheckRedirect(urllib.request.HTTPRedirectHandler):
+    """Re-check every redirect against the allowed addresses."""
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        if urllib.parse.urlparse(newurl).hostname not in ALLOWED_HOSTS:
+            raise PermissionError("Blocked redirect to %s" % urllib.parse.urlparse(newurl).hostname)
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+# No proxy settings are honoured, so traffic goes only where the code says.
+_OPENER = urllib.request.build_opener(urllib.request.ProxyHandler({}), _CheckRedirect())
+
+SAFE_NAME = re.compile(r"^(@[a-z0-9][a-z0-9._~-]*/)?[A-Za-z0-9][A-Za-z0-9._~-]{0,213}$")
+SAFE_VERSION = re.compile(r"^[0-9][0-9A-Za-z.+-]{0,63}$")
+
+
 def _get(url, body=None):
     host = urllib.parse.urlparse(url).hostname
-    if host not in ALLOWED_HOSTS:
+    if host not in ALLOWED_HOSTS or not url.startswith("https://"):
         raise PermissionError("Blocked: %s is not an allowed address" % host)
     data = json.dumps(body).encode() if body is not None else None
     req = urllib.request.Request(url, data=data, headers={
         "User-Agent": "agent-safety-check", "Content-Type": "application/json"})
-    with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
-        return json.loads(resp.read().decode("utf-8"))
+    with _OPENER.open(req, timeout=TIMEOUT) as resp:
+        return json.loads(resp.read(2_000_000).decode("utf-8"))
 
 
 def latest(ecosystem, package):
+    if not package or not SAFE_NAME.match(package):
+        return None
     try:
         if ecosystem == "npm":
             return _get("https://registry.npmjs.org/%s/latest" % urllib.parse.quote(package, safe="@"))["version"]
         if ecosystem == "PyPI":
             return _get("https://pypi.org/pypi/%s/json" % urllib.parse.quote(package))["info"]["version"]
-    except PermissionError:
-        raise
-    except Exception:
+    except Exception:          # includes a refused redirect: mark it "not checked"
         return None
     return None
 
 
 def advisories(ecosystem, package, version):
     """Known security problems for this exact version. Returns a list of ids, or None if unknown."""
-    if not (ecosystem and package and version):
+    if not (ecosystem and package and version) or not SAFE_NAME.match(package) or not SAFE_VERSION.match(version):
         return None
     try:
         res = _get("https://api.osv.dev/v1/query",
                    {"version": version, "package": {"name": package, "ecosystem": ecosystem}})
         return [v.get("id") for v in res.get("vulns", [])]
-    except PermissionError:
-        raise
     except Exception:
         return None
 
@@ -73,20 +88,23 @@ def _newer(a, b):
         return False
 
 
-def local_tool_version(program, flag="--version"):
-    """Ask a well-known program for its version. Only fixed, known programs are asked."""
-    if program not in ("claude", "node", "git"):
+def local_tool_version(program):
+    """Ask a well-known program for its version. Only these fixed programs, only --version."""
+    if program not in ("claude", "node"):
         return None
-    path = shutil.which(program)
+    search = os.environ.get("PATH", "")
+    if platform.system() == "Windows":   # never pick up a program from the current folder
+        os.environ["NoDefaultCurrentDirectoryInExePath"] = "1"
+        search = os.pathsep.join(p for p in search.split(os.pathsep) if p and os.path.abspath(p) != os.getcwd())
+    path = shutil.which(program, path=search)
     if not path:
         return None
     try:
-        out = subprocess.run([path, flag], capture_output=True, text=True, timeout=10)
-        text = (out.stdout or out.stderr).strip().split()
-        for word in text:
+        out = subprocess.run([path, "--version"], capture_output=True, text=True, timeout=10, cwd=os.path.expanduser("~"))
+        for word in (out.stdout or out.stderr).strip().split():
             w = word.lstrip("v")
             if w[:1].isdigit():
-                return w
+                return w[:40]
     except Exception:
         return None
     return None
@@ -114,7 +132,7 @@ def check(connectors, offline=False):
         if offline or not r.get("ecosystem") or not r.get("package"):
             continue
         r["latest"] = latest(r["ecosystem"], r["package"])
-        if r.get("running") and r["running"][:1].isdigit():
+        if r.get("running") and SAFE_VERSION.match(r["running"]):
             r["advisories"] = advisories(r["ecosystem"], r["package"], r["running"])
 
     for r in rows:
@@ -125,6 +143,8 @@ def check(connectors, offline=False):
             r["call"] = ("bad", "Known security problem in this version: update after reviewing")
         elif r.get("pinned") is False:
             r["call"] = ("warn", "Not pinned: it runs whatever is newest each time it starts")
+        elif r["how"].startswith("Installed from"):
+            r["call"] = ("muted", "Not checked: installed from a git address or a folder")
         elif newest and running and _newer(running, newest):
             r["call"] = ("warn", "Newer version available: review what changed, then update")
         elif newest and running:

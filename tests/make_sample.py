@@ -11,7 +11,7 @@ tools = S.inventory()
 # Last week's snapshot: Notion did not yet have move or duplicate, and Gmail could not trash.
 prev_tools = [t for t in tools if not t["name"].endswith(("move_pages", "duplicate_page", "trash_message"))]
 prev_map = analyze.access_map(prev_tools, S.CONNECTORS, S.RULES)
-prev = analyze.snapshot(prev_map, S.CONNECTORS, S.RULES); prev["grade"] = "C"
+prev = analyze.snapshot(prev_map, S.RULES); prev["detected_level"] = "autonomous"
 
 vrows = versions.check(S.CONNECTORS, offline=True)
 for r in vrows:   # illustrative values for the sample only
@@ -27,4 +27,4 @@ drills = [(d, analyze.score_drill(d, drill_text[d["id"]])) for d in analyze.DRIL
 secrets = []
 data, _ = asc.analyse(tools, S.CONNECTORS, S.RULES, vrows, secrets, drills, prev, "Tuesday 3 November 2026", dt.datetime(2026, 11, 10, 7, 2), sample=True)
 (ROOT / "site" / "sample-report.html").write_text(report.build(data), encoding="utf-8")
-print("sample grade", data["letter"], data["score"]); [print(" -", f["title"]) for f in data["fixes"]]
+print("sample level", data["detected"]); [print(" -", f["state"], f["level"], f["title"]) for f in data["findings"]]

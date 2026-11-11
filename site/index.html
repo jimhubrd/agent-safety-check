@@ -121,7 +121,8 @@ The only official copy is at github.com/jimhubrd/agent-safety-check. Warn me if 
 
   <h3>What the report shows</h3>
   <div class="shows">
-    <div><b>Your grade and the three fixes that matter most</b><span>Each fix comes with a prompt you can paste to Claude.</span></div>
+    <div><b>Your setup's operating style</b><span>Hands-on, Guarded or Autonomous, read from your actual settings. You choose which one you want.</span></div>
+    <div><b>Things to be aware of, decided once</b><span>For each one: guard it with a rule, remove it, or say you are OK with it. Accepted items stay quiet unless they change.</span></div>
     <div><b>What Claude may do without asking</b><span>Every standing approval, in plain words, including the ones you clicked late at night.</span></div>
     <div><b>Access map</b><span>Every connector: what it can read, create, change, delete, send and spend.</span></div>
     <div><b>What changed since last time</b><span>New connectors, new abilities, changed rules. How you would spot a connector that turns bad.</span></div>
@@ -150,7 +151,7 @@ const Q=[
  ['secrets','Did you ever paste a key or password straight into a settings file?','Secrets',false],
  ['alerts','Would you find out if a scheduled task failed, or ran and did nothing?','Noticing problems',true]];
 const A={};
-const FIX={data:'Limit what it can read to the folders and mailboxes the job needs.',untrusted:'Keep agents that read strangers\' content away from tools that send or share.',send:'Make every send, post and share wait for your approval.',delete:'Turn off delete actions it does not need, and require approval for the rest.',spend:'Block purchase, launch and upgrade actions in your connector settings.',schedule:'Give scheduled tasks the smallest set of tools, and no ability to send.',versions:'Keep a list of what you installed and from where, and review updates before taking them.',secrets:'Move keys into your computer\'s keychain, and replace any key that sat in a file.',alerts:'Have each scheduled task report what it actually did, not just that it ran.'};
+const FIX={data:'Limit what it can read to the folders and mailboxes the job needs.',untrusted:'Keep agents that read strangers\' content away from tools that send or share.',send:'Put a rule on the way out: let sends go only to people and places you approve, with no prompts.',delete:'Block permanent deletes; moving things to the trash can stay automatic.',spend:'Block purchase, launch and upgrade actions in your connector settings.',schedule:'Give scheduled tasks the smallest set of tools, and no ability to send.',versions:'Keep a list of what you installed and from where, and review updates before taking them.',secrets:'Move keys into your computer\'s keychain, and replace any key that sat in a file.',alerts:'Have each scheduled task report what it actually did, not just that it ran.'};
 const qs=document.getElementById('qs');
 qs.innerHTML=Q.map(([k,t,s])=>`<div class="q"><p>${t}<small>${s}</small></p><div class="opts" role="group" aria-label="${t}" data-k="${k}"><button aria-pressed="false" data-v="yes">Yes</button><button aria-pressed="false" data-v="no">No</button><button aria-pressed="false" data-v="unsure">Not sure</button></div></div>`).join('');
 qs.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const g=b.parentElement;g.querySelectorAll('button').forEach(x=>{x.classList.remove('on');x.setAttribute('aria-pressed','false')});b.classList.add('on');b.setAttribute('aria-pressed','true');A[g.dataset.k]=b.dataset.v;score();});
@@ -161,16 +162,15 @@ function score(){
   const unsure=Q.filter(q=>A[q[0]]==='unsure').length;
   const tri=['data','untrusted','send'].every(bad);
   const n=Q.filter(q=>bad(q[0])).length;
-  let cls,grade,head,body;
-  if(unsure>=5){cls='grey';grade='?';head='You can\'t tell from memory, and that is normal';body='Most people don\'t know these answers. That is exactly what the full report is for: it reads what is actually installed.';}
-  else if(tri){cls='red';grade=n>6?'F':'D';head='All three dangerous abilities';body='Your agent reads private data, reads content strangers wrote, and can send things out without your click. One planted instruction in an email or web page could make it leak what it can see.';}
-  else if(n>=4){cls='amber';grade='C';head='Real gaps, but not all three';body='The worst combination is broken, which matters most. Several other gaps are worth closing.';}
-  else if(n>=2){cls='amber';grade='B';head='Mostly sound';body='A couple of gaps to close.';}
-  else{cls='green';grade=n?'A-':'A';head='Well set up, as far as you know';body='Run the full report to confirm it against what is actually installed.';}
+  let cls,head,body;
+  const level=bad('send')?'Autonomous':(bad('delete')||bad('schedule')||bad('spend'))?'Guarded':'Hands-on';
+  if(unsure>=5){cls='grey';head='You can\'t tell from memory, and that is normal';body='Most people don\'t know these answers. That is exactly what the full report is for: it reads what is actually installed.';}
+  else if(tri){cls='amber';head='Sounds like: '+level+', with all three abilities that matter most';body='Your agent reads private data, reads content strangers wrote, and can send things out without your click. That can be a fine way to work, as long as it is a choice you made, with rules on the way out.';}
+  else{cls=n>=3?'amber':'green';head='Sounds like: '+level;body=n?'A few things worth being aware of. None of them is wrong; each one is a choice to make on purpose.':'Run the full report to confirm it against what is actually installed.';}
   if(unsure&&unsure<5)body+=` You answered "not sure" ${unsure} time${unsure>1?'s':''}; the full report will answer ${unsure>1?'those':'that'}.`;
   const fixes=(tri?['send','untrusted','data']:[]).concat(Q.map(q=>q[0]).filter(bad)).filter((k,i,a)=>a.indexOf(k)===i).slice(0,3);
   r.className=cls;r.hidden=false;
-  r.innerHTML=`<span class="grade">${grade}</span><h3>${head}</h3><p>${body}</p>${fixes.length&&cls!=='grey'?'<b>Fix these first</b><ol>'+fixes.map(k=>'<li>'+FIX[k]+'</li>').join('')+'</ol>':''}<p style="margin:14px 0 0"><a class="btn" href="#install">Get the full report</a></p>`;
+  r.innerHTML=`<h3>${head}</h3><p>${body}</p>${fixes.length&&cls!=='grey'?'<b>Worth deciding on</b><ol>'+fixes.map(k=>'<li>'+FIX[k]+'</li>').join('')+'</ol>':''}<p style="margin:14px 0 0"><a class="btn" href="#install">Get the full report</a></p>`;
 }
 document.addEventListener('click',e=>{const b=e.target.closest('[data-copy]');if(!b)return;const t=document.getElementById(b.dataset.copy).textContent;const done=()=>{const o=b.textContent;b.textContent='Copied';setTimeout(()=>b.textContent=o,1500)};if(navigator.clipboard)navigator.clipboard.writeText(t).then(done);});
 </script>

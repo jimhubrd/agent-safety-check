@@ -11,6 +11,7 @@ header{border-bottom:1px solid var(--line);padding:22px 0}header h1{margin:0;fon
 .top{display:grid;grid-template-columns:170px 1fr;gap:20px;margin:24px 0}
 .gradebox{border:2px solid var(--line);border-radius:14px;text-align:center;padding:18px}
 .gradebox b{display:block;font-size:56px;line-height:1}.gradebox span{font-size:13px;color:var(--muted)}
+.g-level{border-color:#bfdbfe;background:#eff6ff}.g-level b{font-size:30px;color:var(--blue);margin-top:6px}.g-level span{display:block}section.first{margin-top:6px}.fact.warn{border-color:#fde68a;background:#fffbeb}
 .g-good{border-color:#a7f3d0;background:#ecfdf5}.g-good b{color:var(--green)}
 .g-mid{border-color:#fde68a;background:#fffbeb}.g-mid b{color:var(--amber)}
 .g-bad{border-color:#fecaca;background:#fef2f2}.g-bad b{color:var(--red)}
@@ -54,67 +55,96 @@ def n(v, hot=False):
     return '<td class="c%s">%d</td>' % (" hot" if hot else "", v)
 
 
+def _finding(f, i):
+    lvl = {"important": ("p-bad", "Important"), "aware": ("p-warn", "Be aware"), "info": ("p-muted", "For your information")}[f["level"]]
+    state = {"changed": '<span class="pill p-bad">Changed since you accepted it</span> ', "accepted": '<span class="pill p-ok">Accepted by you %s</span> ' % e(f.get("accepted_on") or ""), "open": ""}[f["state"]]
+    opts = []
+    for j, (label, prompt) in enumerate(f["options"]):
+        opts.append('<div class="ask"><span>%s: paste this to Claude</span><button data-copy="f%d_%d">Copy</button><div id="f%d_%d">%s</div></div>'
+                    % (e(label), i, j, i, j, e(prompt)))
+    return ('<div class="fix"><b>%s</b> %s<span class="pill %s">%s</span><p>%s</p><details><summary>Your choices</summary>%s</details>'
+            '<p class="sub">Finding id: %s</p></div>' % (e(f["title"]), state, lvl[0], lvl[1], e(f["what"]), "".join(opts), e(f["id"])))
+
+
 def build(data):
     d = data
-    score, letter = d["score"], d["letter"]
-    gcls = "g-good" if score >= 85 else "g-mid" if score >= 65 else "g-bad"
-    prev = d.get("previous_grade")
-    moved = ("First check on this computer" if not prev else
-             "Same as last time (%s)" % prev if prev == letter else "Was %s last time" % prev)
-
+    levels = d["levels"]
+    det_name, det_desc = levels[d["detected"]]
     out = ['<!doctype html><html lang="en"><head><meta charset="utf-8">'
            '<meta name="viewport" content="width=device-width, initial-scale=1">'
            '<title>Agent Safety Report</title><style>%s</style></head><body>' % CSS]
     if d.get("sample"):
         out.append('<div class="banner">Sample report made from a typical made-up setup. Not a scan of a real computer.</div>')
-    out.append('<header><div class="wrap"><h1>Agent Safety Report</h1><p>%s &middot; %s</p></div></header><div class="wrap">'
-               % (e(d["when"]), e(d["compared"])))
+    out.append('<header><div class="wrap"><h1>Agent Safety Report</h1><p>%s &middot; %s &middot; Early release %s: there will be bugs</p></div></header><div class="wrap">'
+               % (e(d["when"]), e(d["compared"]), e(d.get("version", ""))))
 
-    # grade and fixes
-    out.append('<div class="top"><div class="gradebox %s"><b>%s</b><span>%s</span></div><div class="fixes"><h2>Fix these first</h2>' % (gcls, e(letter), e(moved)))
-    if not d["fixes"]:
-        out.append('<p>Nothing urgent. Keep running the check so you notice when something changes.</p>')
-    for i, f in enumerate(d["fixes"][:3]):
-        out.append('<div class="fix"><b>%d. %s</b><p>%s</p><div class="ask"><span>Paste this to Claude to fix it</span>'
-                   '<button data-copy="fx%d">Copy</button><div id="fx%d">%s</div></div></div>'
-                   % (i + 1, e(f["title"]), e(f["why"]), i, i, e(f["prompt"])))
-    if len(d["fixes"]) > 3:
-        out.append('<details><summary>%d more suggestions</summary>' % (len(d["fixes"]) - 3))
-        for i, f in enumerate(d["fixes"][3:], start=3):
-            out.append('<div class="fix"><b>%s</b><p>%s</p><div class="ask"><span>Paste this to Claude</span>'
-                       '<button data-copy="fx%d">Copy</button><div id="fx%d">%s</div></div></div>'
-                       % (e(f["title"]), e(f["why"]), i, i, e(f["prompt"])))
-        out.append('</details>')
-    out.append('</div></div>')
+    # operating style
+    chosen = d.get("chosen")
+    if chosen:
+        match = chosen == d["detected"]
+        choice_line = ("You chose %s. Your setup matches." % levels[chosen][0]) if match else (
+            "You chose %s, but your setup currently runs in the %s style. The findings below show what differs." % (levels[chosen][0], det_name))
+    else:
+        choice_line = "You have not chosen an operating style yet. Until you do, findings are measured against Guarded."
+    out.append('<div class="top"><div class="gradebox g-level"><span>Your setup&#39;s operating style</span><b>%s</b></div><div class="fixes">'
+               '<h2>Your setup&#39;s operating style</h2><p>%s</p><p>%s</p>' % (e(det_name), e(det_desc), e(choice_line)))
+    out.append('<details><summary>Is this the style you want? Choose your operating style</summary><table>')
+    for key, (name, desc) in [(k, levels[k]) for k in ("hands-on", "guarded", "autonomous")]:
+        out.append('<tr><td><b>%s</b></td><td>%s</td><td><div class="ask"><button data-copy="lv_%s">Copy</button><div id="lv_%s">Set my agent safety operating style to %s.</div></div></td></tr>'
+                   % (e(name), e(desc), key, key, key))
+    out.append('</table></details></div></div>')
+
+    # findings
+    found = d["findings"]
+    active = [f for f in found if f["state"] != "accepted" and f["level"] != "info"]
+    info = [f for f in found if f["state"] != "accepted" and f["level"] == "info"]
+    accepted = [f for f in found if f["state"] == "accepted"]
+    out.append('<section class="first"><h2>Things to be aware of</h2><p class="lead">What Claude can do on its own that you should decide about once. '
+               'For each one you can guard it with a rule, remove it, or say you are OK with it. Once you accept something, it stays quiet unless it changes.</p>')
+    if not active:
+        out.append('<p><span class="pill p-ok">Nothing new to decide</span> Everything is either covered by your rules or accepted by you.</p>')
+    for i, f in enumerate(active):
+        out.append(_finding(f, i))
+    if info:
+        out.append('<details><summary>%d more for your information (matching the operating style you chose)</summary>%s</details>'
+                   % (len(info), "".join(_finding(f, 100 + i) for i, f in enumerate(info))))
+    if accepted:
+        out.append('<details><summary>%d accepted by you</summary>%s</details>'
+                   % (len(accepted), "".join(_finding(f, 200 + i) for i, f in enumerate(accepted))))
+    out.append('</section>')
 
     # plain facts
     legs = d["legs"]
     tri = all(legs.values())
     free_send = [s for s in d["amap"].values() if s["free_send"]]
+    open_paths = [p for p in d["paths"] if p["status"] in ("free", "auto")]
     out.append('<div class="facts">')
     out.append('<div class="fact %s"><b>%s</b><div class="sub">%s</div></div>' % (
-        "bad" if tri else "ok",
-        "Your agent has all three dangerous abilities" if tri else "Your agent does not have all three dangerous abilities",
+        "warn" if tri else "ok",
+        "Your agent has all three abilities that matter most" if tri else "Your agent does not have all three abilities that matter most",
         "Reads private data (%s), reads content strangers wrote (%s), and can send things out (%s)." % (
             e(", ".join(legs["private"]) or "none"), e(", ".join(legs["untrusted"]) or "none"), e(", ".join(legs["send"]) or "none"))))
-    out.append('<div class="fact %s"><b>%s</b><div class="sub">%s</div></div>' % (
-        "bad" if free_send else "ok",
-        ("Claude can send as you through %d connector%s without asking" % (len(free_send), "" if len(free_send) == 1 else "s")) if free_send else "Nothing can send without a check",
-        e(", ".join(s["name"] for s in free_send)) if free_send else "Every send, share or post action asks you first, is blocked, or passes through a guard script."))
+    if free_send or open_paths:
+        what = [s["name"] for s in free_send] + [p["what"].lower() for p in open_paths]
+        out.append('<div class="fact warn"><b>Some ways out have no rule in the way</b><div class="sub">%s</div></div>' % e(", ".join(what)))
+    else:
+        out.append('<div class="fact ok"><b>Every way out has a rule in the way</b><div class="sub">Sending, sharing, commands and web requests '
+                   'are blocked, checked by a guard script, or ask you first.</div></div>')
     drills = d["drills"]
     passed = sum(1 for _, r in drills if r[0] == "ok")
     ran = sum(1 for _, r in drills if r[0] != "muted")
-    out.append('<div class="fact %s"><b>Fire drill: %s</b><div class="sub">Planted instructions, tested with sending switched off.</div></div>' % (
+    out.append('<div class="fact %s"><b>Fire drill: %s</b><div class="sub">Planted instructions, handled by a helper that can only read files.</div></div>' % (
         "ok" if ran and passed == ran else "bad" if ran else "", ("%d of %d passed" % (passed, ran)) if ran else "not run this time"))
     adv = [r for r in d["versions"] if r.get("advisories")]
-    out.append('<div class="fact %s"><b>%s</b><div class="sub">%d connector%s found.</div></div></div>' % (
+    out.append('<div class="fact %s"><b>%s</b><div class="sub">%d connector%s checked%s.</div></div></div>' % (
         "bad" if adv else "ok",
         ("%d installed version%s with known security problems" % (len(adv), "" if len(adv) == 1 else "s")) if adv else "No known security problems in installed versions",
-        len(d["amap"]), "" if len(d["amap"]) == 1 else "s"))
+        len(d["amap"]), "" if len(d["amap"]) == 1 else "s",
+        (", %d set up but not checked" % len(d["missing"])) if d["missing"] else ""))
 
     # standing approvals
     out.append('<section><h2>What Claude may do without asking</h2><p class="lead">Your standing approvals and block rules, in plain words. '
-               'Many come from clicking "don\'t ask again".</p>')
+               'Many come from clicking "don\'t ask again". Anything that looks like a key is masked.</p>')
     if d["approvals"]:
         rows = ['<tr><td class="sub">%s</td><td>%s</td></tr>' % (e(rule), e(meaning)) for rule, meaning in d["approvals"]]
         out.append('<table><tr><th>Rule</th><th>What it means</th></tr>%s</table>' % "".join(rows[:8]))
@@ -126,7 +156,7 @@ def build(data):
 
     # access map
     out.append('<section><h2>Access map</h2><p class="lead">What each connector lets Claude do, counted by action. '
-               'Red numbers run without asking. Actions with unclear names are counted as changes, on purpose.</p>'
+               'Red numbers run on their own with no rule in the way. Actions with unclear names are counted as changes, on purpose.</p>'
                '<table><tr><th>Connector</th><th>Where it comes from</th><th class="c">Read</th><th class="c">Create</th>'
                '<th class="c">Change</th><th class="c">Delete</th><th class="c">Send or share</th><th class="c">Spend</th><th>Abilities</th></tr>')
     for s in d["amap"].values():
@@ -134,7 +164,7 @@ def build(data):
         nlegs = sum(1 for v in s["legs"].values() if v)
         pill = ("p-bad", "All three") if nlegs == 3 else ("p-warn", "Two of three") if nlegs == 2 else ("p-ok", "One of three") if nlegs == 1 else ("p-ok", "None")
         if c["send"] == 0 and c["delete"] == 0 and c["spend"] == 0 and c["create"] == 0 and c["update"] == 0:
-            pill = ("p-ok", "Read only") if nlegs < 3 else pill
+            pill = ("p-ok", "Read only, by name") if nlegs < 3 else pill
         out.append('<tr><td>%s</td><td class="sub">%s%s</td>%s%s%s%s%s%s<td><span class="pill %s">%s</span></td></tr>' % (
             e(s["name"]), e(s.get("source")), (" " + e(s["version"])) if s.get("version") else "",
             n(c["read"]), n(c["create"]), n(c["update"]),
@@ -152,7 +182,7 @@ def build(data):
     out.append('<section><h2>What changed since last time</h2><p class="lead">New connectors, new actions and changed rules. '
                'A connector that turns bad usually shows up here first.</p>')
     if d["changes"] is None:
-        out.append('<p>This is the first check on this computer. From the next run on, changes appear here.</p>')
+        out.append('<p>This is the first check from this folder. From the next run on, changes appear here.</p>')
     elif not d["changes"]:
         out.append('<p><span class="pill p-ok">No changes</span> since %s.</p>' % e(d["compared_when"]))
     else:
@@ -164,9 +194,9 @@ def build(data):
     out.append('</section>')
 
     # drills
-    out.append('<section><h2>Fire drill</h2><p class="lead">Three test files, each with a planted instruction aimed at an address that '
-               'cannot receive mail. A separate helper that can only read files handled them, so nothing could be sent or changed. '
-               'The question is whether your agent would go along.</p><table><tr><th>Planted in</th><th>What it asked</th><th>Result</th><th>What it means</th></tr>')
+    out.append('<section><h2>Fire drill</h2><p class="lead">Three test files, each with a planted instruction aimed at fake addresses that '
+               'cannot receive anything. A separate helper that can only read files handled them, so nothing could be sent or changed. '
+               'It shows whether a Claude helper goes along with planted text. It does not test your own rules.</p><table><tr><th>Planted in</th><th>What it asked</th><th>Result</th><th>What it means</th></tr>')
     for dr, (state, label, meaning) in drills:
         out.append('<tr><td>%s</td><td>"%s"</td><td><span class="pill %s">%s</span></td><td class="sub">%s</td></tr>' % (
             e(dr["where"]), e(dr["asked"]), CALL_PILL[state], e(label), e(meaning)))
@@ -200,7 +230,8 @@ def build(data):
                '<li>It sees the connectors available in the Claude Code session it ran in. Connectors that exist only in another app, '
                'or only on the web version of Claude, may not appear. If one you use is missing from the access map, it was not checked.</li>'
                '<li>Vendor-hosted connectors publish no version. They are watched through changes to their list of actions.</li>'
-               '<li>The fire drill tests three known patterns with sending switched off. Passing does not prove nothing else could get through.</li>'
+               '<li>The fire drill uses a separate helper that cannot send and does not have your own rules. It tests three known patterns; passing does not prove nothing else could get through.</li>'
+               '<li>Organization-wide managed settings are not read, so rules set by your company may not show.</li>'
                '<li>Guard scripts are detected, not read. The report cannot tell what a guard script actually blocks.</li>'
                '<li>This is information, not a security audit.</li></ul></div></div>')
     out.append('<footer><div class="wrap">Agent Safety Check %s &middot; Written on this computer. Nothing was sent anywhere except '

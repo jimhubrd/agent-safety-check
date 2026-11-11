@@ -1,7 +1,7 @@
 """Sort each connector action into a class, from the words in its name.
 
 Classes, from most to least serious:
-    spend   purchase, deploy, upgrade
+    spend   purchase, pay, deploy (money or a public launch)
     send    send, share, post, publish (ways data can leave)
     delete  delete, remove, trash
     update  change something that exists
@@ -12,7 +12,9 @@ A more serious word always wins. "find_and_replace_doc" is an update,
 not a read, because "replace" outranks "find".
 
 If no known word is found, the action counts as an update and is marked
-"unclear", so the report leans toward caution on purpose.
+"unclear", so the report leans toward caution on purpose. Sorting by name
+cannot catch a connector that hides a sending action behind a harmless
+name; the report says so.
 """
 
 import re
@@ -21,8 +23,8 @@ CLASSES = ["spend", "send", "delete", "update", "create", "read"]
 
 WORDS = {
     "spend": {
-        "purchase", "buy", "pay", "payment", "checkout", "subscribe",
-        "upgrade", "deploy", "redeploy", "promote", "rollback", "transfer",
+        "purchase", "buy", "pay", "payment", "checkout", "subscribe", "charge",
+        "refund", "payout", "upgrade", "deploy", "redeploy", "promote", "rollback", "transfer",
     },
     "send": {
         "send", "reply", "forward", "post", "publish", "share", "invite",
@@ -39,15 +41,15 @@ WORDS = {
         "toggle", "enable", "disable", "reset", "assign", "accept",
         "decline", "respond", "sync", "configure", "pin", "unpin", "archive",
         "restore", "transition", "approve", "reject", "close", "reopen",
-        "format", "sort", "batch", "unlabel", "unmark", "untrash", "unarchive", "unstar", "star",
-        "snooze", "mute", "unmute", "follow", "unfollow", "subscribe_to", "click", "type", "press", "drag",
-        "fill", "select", "navigate", "scroll", "key",
+        "format", "sort", "batch", "unlabel", "unmark", "untrash", "unarchive",
+        "unstar", "star", "snooze", "mute", "unmute", "follow", "unfollow",
+        "click", "type", "press", "drag", "fill", "select", "navigate", "scroll", "key",
     },
     "create": {
         "create", "add", "new", "insert", "upload", "write", "draft",
         "make", "copy", "import", "generate", "append", "start", "run",
         "execute", "invoke", "kickstart", "trigger", "schedule", "book",
-        "save", "duplicate", "clone", "fork", "record",
+        "save", "duplicate", "clone", "fork",
     },
     "read": {
         "get", "list", "read", "search", "find", "fetch", "query", "view",
@@ -59,9 +61,12 @@ WORDS = {
     },
 }
 
-# "send" words that are really reads when paired with a read word, e.g.
-# "list_messages", "get_email", "search_messages".
+# Words that are usually nouns. "list_messages" reads; it does not send.
 NOUN_LIKE = {"message", "email", "comment", "post", "reaction", "dm"}
+# Changing who can see something is sharing.
+SHARING_NOUNS = {"permission", "permissions", "access", "sharing", "visibility", "acl"}
+# Creating one of these costs money or launches something public.
+SPEND_NOUNS = {"deployment", "deployments", "invoice", "order", "domain", "payment"}
 
 
 def split_words(name):
@@ -87,26 +92,44 @@ def server_part(tool_name):
 def classify(tool_name):
     """Return (class, deciding_word, unclear)."""
     words = split_words(action_part(tool_name))
+    # A name that starts with a read word only looks: "get_purchase_quote" reads.
+    later = set(words[1:])
+    if words and words[0] in WORDS["read"] and not later & ((WORDS["send"] - NOUN_LIKE) | WORDS["delete"] | WORDS["update"] | WORDS["create"]):
+        return "read", words[0], False
     found = {}
     for cls in CLASSES:
         for w in words:
             if w in WORDS[cls]:
                 found.setdefault(cls, w)
-    # A noun such as "message" or "email" is not a send by itself:
-    # "list_messages" reads, "untrash_message" changes. Only a real send verb counts.
+
+    # A noun such as "message" is only a send when it leads the name
+    # ("email_report", "message_user") or a real send verb is present.
     if "send" in found and found["send"] in NOUN_LIKE:
         verbs = [w for w in words if w in WORDS["send"] and w not in NOUN_LIKE]
         if verbs:
             found["send"] = verbs[0]
+        elif words and words[0] in NOUN_LIKE and len(words) > 1 and not (set(found) - {"send"}):
+            found["send"] = words[0]
         else:
             del found["send"]
-    # Creating a deployment launches code or a site: treat it like spending.
-    if "create" in found and any(w in ("deployment", "deployments") for w in words):
-        found["spend"] = "deployment"
+
+    # Creating a comment or a post shows it to other people.
+    if "create" in found and any(w in ("comment", "comments", "post", "posts") for w in words):
+        found.setdefault("send", "comment" if "comment" in words or "comments" in words else "post")
+
     # "send_message_draft" only makes a draft; "send_draft" really sends one.
-    if found.get("send") and words and words[-1] in ("draft", "drafts"):
+    if found.get("send") and words[-1:] in (["draft"], ["drafts"]) and words[-2:-1] != ["send"]:
         del found["send"]
         found.setdefault("create", words[-1])
+
+    # Changing permissions or access is sharing.
+    if any(w in SHARING_NOUNS for w in words) and ({"update", "create"} & set(found)):
+        found.setdefault("send", next(w for w in words if w in SHARING_NOUNS))
+
+    # Creating a deployment, subscription or order spends money or launches something.
+    if "create" in found and any(w in SPEND_NOUNS for w in words):
+        found.setdefault("spend", next(w for w in words if w in SPEND_NOUNS))
+
     for cls in CLASSES:
         if cls in found:
             return cls, found[cls], False

@@ -2,7 +2,8 @@
 
 A free, open-source safety check for people who have connected Claude to their email, files and work tools. It runs on your own computer and writes a plain-language report:
 
-- **Your grade and the three fixes that matter most**, each with a prompt you can paste to Claude.
+- **Your setup's operating style:** Hands-on, Guarded or Autonomous, read from your settings. You choose the level you want.
+- **Things to be aware of, decided once:** for each one, guard it with a rule, remove it, or say you are OK with it. Accepted items stay quiet unless they change. There is no grade.
 - **What Claude may do without asking:** your standing approvals and block rules, in plain words.
 - **Access map:** every connector, and what it lets Claude read, create, change, delete, send and spend.
 - **What changed since last time:** new connectors, new abilities, changed rules.
@@ -22,7 +23,7 @@ Paste the prompt in [REVIEW-PROMPT.md](REVIEW-PROMPT.md) into Claude or Codex. P
 | | |
 | --- | --- |
 | **Reads** | Claude configuration files only: `~/.claude.json`, `~/.claude/settings*.json`, the project's `.claude/settings*.json` and `.mcp.json`, the desktop app's `claude_desktop_config.json`, and the version number in desktop extension manifests. Plus the names of tools Claude can see; it never calls them. |
-| **Never reads** | Email, messages, documents, calendars, other files, browser data, passwords or keychains. Secret values are never stored or shown. |
+| **Never reads** | Email, messages, documents, calendars, other files, browser data, passwords or keychains. Secret values are never stored; the report shows only where a secret is and its first four characters. |
 | **Writes** | Only inside `~/agent-safety-check/`. |
 | **Contacts** | Only `registry.npmjs.org`, `pypi.org` and `api.osv.dev`, sending package names and version numbers. Any other address is refused in code (`kit/scripts/versions.py`). `--offline` contacts nothing. |
 | **Changes** | Nothing. It never edits settings, installs, updates, sends, shares or deletes. Uninstall removes only its own files, after you confirm. |
