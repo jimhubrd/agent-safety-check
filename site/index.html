@@ -97,13 +97,13 @@ The only official copy is at github.com/jimhubrd/agent-safety-check. Warn me if 
   <div class="step"><div class="num">2</div><div>
     <h3>Install it</h3>
     <p>Open the Code tab in the Claude desktop app (or Claude Code in a terminal) and paste this:</p>
-    <div class="code" id="installcmd">Install Agent Safety Check version 0.1.0 for me. Download https://github.com/jimhubrd/agent-safety-check/archive/refs/tags/v0.1.0.zip into a temporary folder and unzip it. Copy its kit folder to ~/.claude/skills/agent-safety-check, and copy kit/agents/asc-drill-reader.md to ~/.claude/agents/. Then run: python3 ~/.claude/skills/agent-safety-check/scripts/asc.py selftest (on Windows use python or py instead of python3). Change nothing else, and tell me the result.</div>
+    <div class="code" id="installcmd">Install Agent Safety Check version 0.1.0 for me. Download https://github.com/jimhubrd/agent-safety-check/releases/download/v0.1.0/agent-safety-check-kit-0.1.0.zip into a new temporary folder. Check that the file's SHA-256 checksum is 43ca93549458d7ab9bf3a5d054212809adbbd0c868c2e80a61ccaa8578248024. If it is different, stop and tell me. Otherwise unzip it, copy its kit folder to ~/.claude/skills/agent-safety-check, and copy kit/agents/asc-drill-reader.md to ~/.claude/agents/. Then run: python3 ~/.claude/skills/agent-safety-check/scripts/asc.py selftest (on Windows use python or py instead of python3). Change nothing else, and tell me the result.</div>
     <p><button class="btn" data-copy="installcmd">Copy the install instruction</button></p>
     <div class="note"><b>Isn't pasting an instruction exactly what this site warns about?</b> Fair question. The difference is who chose it. You picked this instruction, from a page you came to on purpose, after your own AI reviewed the code, and it only installs files that read. A planted instruction arrives hidden inside an email or web page someone else wrote, and asks your agent to do something you never asked for.</div>
     <p><b>Approval prompts you will see, and what to click:</b></p>
     <table>
       <tr><th>Claude asks to</th><th>Click</th></tr>
-      <tr><td>Download the zip file from github.com</td><td>Allow</td></tr>
+      <tr><td>Download the zip file from github.com and check its fingerprint</td><td>Allow</td></tr>
       <tr><td>Unzip it and copy files into your .claude folder</td><td>Allow</td></tr>
       <tr><td>Run the self-test with python</td><td>Allow</td></tr>
       <tr><td>Anything that mentions send, share, post, delete, or one of your connectors (Gmail, Slack, Drive and so on)</td><td><b>Deny and stop.</b> The install never needs these.</td></tr>

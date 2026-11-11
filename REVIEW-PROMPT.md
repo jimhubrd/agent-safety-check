@@ -32,3 +32,4 @@ If your AI reports any of these, do not install, and please open an issue:
 - Reading email, documents, browser data, passwords or keychains.
 - Code that is scrambled, encoded or downloaded at run time.
 - A copy of this project hosted anywhere other than github.com/jimhubrd/agent-safety-check.
+- A release download whose SHA-256 checksum does not match the one in the README.
